@@ -1212,7 +1212,8 @@ function getAllLocalData(){
   var data = {};
   for(var i = 0; i < localStorage.length; i++){
     var k = localStorage.key(i);
-    if(k && k.indexOf('lu_') === 0) data[k] = localStorage.getItem(k);
+    // 排除token，不上传到云端（安全考虑）
+    if(k && k.indexOf('lu_') === 0 && k !== 'lu_gh_token') data[k] = localStorage.getItem(k);
   }
   return data;
 }
@@ -1335,7 +1336,7 @@ function checkSyncStatus(){
     if(!r.ok){ setSyncStatus('云端状态: HTTP ' + r.status, 'var(--text-light)'); return null; }
     return r.json();
   }).then(function(result){
-    if(result && result.content){
+    if(result && result.content && result.commit && result.commit.committer){
       var date = new Date(result.commit.committer.date);
       var time = date.toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
       setSyncStatus('☁️ 云端最后更新: ' + time, 'var(--green)');
