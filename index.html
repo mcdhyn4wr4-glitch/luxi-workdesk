@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="鹿系工作台">
+<meta name="theme-color" content="#7B6B5E">
+<title>鹿系工作台</title>
+<style>
+/* ==================== 全局重置 ==================== */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;font-size:15px;color:#3a3a3a;background:#faf8f5;-webkit-font-smoothing:antialiased}
+input,textarea,select,button{font-family:inherit;font-size:inherit;color:inherit;border:none;outline:none;background:none}
+button{cursor:pointer}
+:root{--primary:#7B6B5E;--primary-light:#A89B8E;--primary-bg:#F0EBE3;--accent:#C97B5E;--bg:#faf8f5;--card:#ffffff;--text:#3a3a3a;--text-light:#8a8a8a;--border:#ece8e2;--green:#6B9B7E;--pink:#D4847A;--blue:#7B9EB5}
+
+/* ==================== 整体布局 ==================== */
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+
+/* 顶部状态栏留白（适配刘海屏） */
+.safe-top{height:env(safe-area-inset-top);background:var(--primary);flex-shrink:0}
+
+/* ==================== 顶部栏 ==================== */
+.topbar{background:var(--primary);color:#fff;padding:12px 16px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:18px;font-weight:600;letter-spacing:1px}
+.topbar .top-date{font-size:12px;opacity:.8}
+
+/* ==================== 内容区 ==================== */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 20px}
+.page{display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ==================== 底部Tab栏 ==================== */
+.tabbar{display:flex;background:#fff;border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom));flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;color:#bbb;font-size:11px;transition:color .2s}
+.tab .tab-icon{font-size:20px;line-height:1}
+.tab.active{color:var(--primary)}
+.tab.active .tab-icon{transform:scale(1.1)}
+
+/* ==================== 通用组件 ==================== */
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:12px;color:var(--primary);display:flex;align-items:center;gap:6px}
+.card-title .emoji{font-size:17px}
+.section-label{font-size:12px;color:var(--text-light);margin:18px 0 8px;font-weight:600;letter-spacing:.5px}
+
+/* 输入框 */
+.input,.textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;transition:border-color .2s}
+.input:focus,.textarea:focus{border-color:var(--primary-light)}
+.textarea{resize:none;min-height:60px;line-height:1.5}
+.input::placeholder,.textarea::placeholder{color:#ccc}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:9px 18px;border-radius:10px;font-size:14px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active{transform:scale(.96);opacity:.85}
+.btn-outline{border:1px solid var(--primary);color:var(--primary);background:none}
+.btn-outline:active{background:var(--primary-bg)}
+.btn-sm{padding:6px 14px;font-size:13px}
+.btn-block{display:flex;width:100%}
+
+/* 标签 */
+.tag{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:500;margin-right:5px}
+.tag-product{background:#FDF0EC;color:var(--accent)}
+.tag-daily{background:#EAF3EE;color:var(--green)}
+.tag-skill{background:#EBF1F5;color:var(--blue)}
+.tag-view{background:#F5EDF2;color:var(--pink)}
+.tag-interact{background:#F5F0E6;color:#B8956B}
+
+/* 选题卡片 */
+.topic-item{background:#fff;border-radius:12px;padding:13px 14px;margin-bottom:10px;border:1px solid var(--border);transition:border-color .2s}
+.topic-item:active{border-color:var(--primary-light)}
+.topic-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.topic-title{font-size:14px;font-weight:500;line-height:1.45;flex:1}
+.topic-status{font-size:18px;flex-shrink:0;line-height:1}
+.topic-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.topic-desc{font-size:12px;color:var(--text-light);margin-top:6px;line-height:1.5}
+.topic-platforms{display:flex;gap:8px;margin-top:8px;font-size:11px;color:var(--text-light)}
+.topic-platforms span{display:flex;align-items:center;gap:3px}
+
+/* 状态颜色 */
+.st-idea{color:#ccc}
+.st-script{color:var(--blue)}
+.st-shoot{color:#E8A838}
+.st-done{color:var(--green)}
+.st-review{color:var(--pink)}
+
+/* 子Tab */
+.subtabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.subtab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;background:#fff;border:1px solid var(--border);color:var(--text-light);transition:all .2s}
+.subtab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* 每日计划 */
+.todo-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.todo-item:last-child{border-bottom:none}
+.todo-check{width:22px;height:22px;border-radius:50%;border:2px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px;color:#fff}
+.todo-check.done{background:var(--green);border-color:var(--green)}
+.todo-text{flex:1;font-size:14px;line-height:1.4}
+.todo-text.done{color:#bbb;text-decoration:line-through}
+.todo-del{font-size:16px;color:#ddd;padding:4px;flex-shrink:0}
+
+/* 发布追踪表 */
+.track-table{width:100%;border-collapse:collapse;font-size:13px}
+.track-table th{text-align:left;font-weight:500;color:var(--text-light);padding:6px 4px;border-bottom:1px solid var(--border);font-size:11px}
+.track-table td{padding:8px 4px;border-bottom:1px solid var(--border)}
+.track-table select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px}
+
+/* 灵感记录 */
+.idea-item{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border);border-left:3px solid var(--primary-light)}
+.idea-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.idea-date{font-size:11px;color:var(--text-light)}
+.idea-account{font-size:11px;padding:2px 8px;border-radius:5px;background:var(--primary-bg);color:var(--primary)}
+.idea-content{font-size:14px;line-height:1.5}
+.idea-del{font-size:14px;color:#ddd;padding:2px}
+
+/* 生活记录 */
+.mood-picker{display:flex;gap:10px;margin:10px 0}
+.mood{font-size:26px;opacity:.4;transition:all .2s;cursor:pointer}
+.mood.selected{opacity:1;transform:scale(1.2)}
+
+/* 总览 */
+.overview-account{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:12px;margin-bottom:10px;border:1px solid var(--border)}
+.overview-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.overview-info{flex:1}
+.overview-name{font-size:15px;font-weight:600}
+.overview-desc{font-size:12px;color:var(--text-light);margin-top:2px}
+
+/* 数据条 */
+.data-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.data-row:last-child{border:none}
+.data-label{color:var(--text-light)}
+.data-val{font-weight:500}
+
+/* 空状态 */
+.empty{text-align:center;padding:30px 0;color:#ccc;font-size:14px}
+
+/* 提示条 */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* 进度条 */
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="safe-top"></div>
+
+  <!-- ========== 顶部栏 ========== -->
+  <div class="topbar">
+    <h1 id="pageTitle">鹿系工作台</h1>
+    <span class="top-date" id="topDate"></span>
+  </div>
+
+  <!-- ========== 内容区 ========== -->
+  <div class="content" id="content">
+
+    <!-- ===== 页面0: 每日计划 ===== -->
+    <div class="page active" id="page-plan">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text-light)" id="planDateLong"></div>
+      </div>
+
+      <!-- 每日推荐选题 -->
+      <div class="card" id="dailyCard" style="border:1.5px solid var(--primary-light)">
+        <div class="card-title">
+          <span class="emoji">🌟</span>今日选题推荐
+          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:400" id="dayLabel"></span>
+        </div>
+        <div id="dailyRecommend"></div>
+        <div style="margin-top:10px;font-size:11px;color:#bbb;text-align:center">每天 3 个账号各推 1 个 · 点击选题跳转到选题库</div>
+      </div>
+
+      <!-- 本周全部推荐 -->
+      <div class="card" id="weeklyCard" style="display:none">
+        <div class="card-title">
+          <span class="emoji">📅</span>本周全部推荐
+          <span style="margin-left:auto;font-size:10px;padding:3px 8px;background:var(--primary-bg);border-radius:5px;color:var(--primary);font-weight:400" id="homeStageLabel" onclick="toggleHomeStage()">水电阶段</span>
+        </div>
+        <div id="weeklyRecommend"></div>
+        <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="refreshWeekly()">🔄 重新生成本周推荐</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:14px">
+        <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">📅 查看本周全部推荐</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">🎯</span>今日三件最重要的事</div>
+        <div id="top3List"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input class="input" id="top3Input" placeholder="添加一件最重要的事..." style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="addTop3()">添加</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">📱</span>今日内容发布追踪</div>
+        <table class="track-table" id="trackTable"></table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">📋</span>其他待办</div>
+        <div id="todoList"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input class="input" id="todoInput" placeholder="添加待办事项..." style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="addTodo()">添加</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">📊</span>今日数据速记</div>
+        <div id="dataQuick"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">✏️</span>今日小记</div>
+        <textarea class="textarea" id="dailyNote" placeholder="一句话记录今天..." style="min-height:50px"></textarea>
+      </div>
+    </div>
+
+    <!-- ===== 页面1: 选题库 ===== -->
+    <div class="page" id="page-topics">
+      <div class="subtabs">
+        <div class="subtab active" onclick="switchAccount('luxe')">🌸 鹿溪风</div>
+        <div class="subtab" onclick="switchAccount('home')">🏠 鹿住新家</div>
+        <div class="subtab" onclick="switchAccount('slow')">🌿 鹿慢慢</div>
+      </div>
+      <div id="topicsContainer"></div>
+    </div>
+
+    <!-- ===== 页面2: 灵感记录 ===== -->
+    <div class="page" id="page-idea">
+      <div class="card">
+        <div class="card-title"><span class="emoji">💡</span>快速记录灵感</div>
+        <textarea class="textarea" id="ideaInput" placeholder="想到什么写什么，不用完整..." style="min-height:70px"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <select class="input" id="ideaAccount" style="flex:1;font-size:13px">
+            <option value="">选择归属账号（可选）</option>
+            <option value="鹿溪风">鹿溪风</option>
+            <option value="鹿住新家">鹿住新家</option>
+            <option value="鹿慢慢">鹿慢慢</option>
+            <option value="通用">通用</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="addIdea()">记录</button>
+        </div>
+      </div>
+      <div class="section-label">灵感收集箱</div>
+      <div id="ideaList"></div>
+    </div>
+
+    <!-- ===== 页面3: 生活记录 ===== -->
+    <div class="page" id="page-life">
+      <div class="card">
+        <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:6px" id="lifeDate"></div>
+        <div class="card-title" style="justify-content:center"><span class="emoji">📖</span>今日日记</div>
+        <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:4px">今天的状态</div>
+        <div class="mood-picker" style="justify-content:center" id="moodPicker">
+          <span class="mood" data-mood="😊">😊</span>
+          <span class="mood" data-mood="😐">😐</span>
+          <span class="mood" data-mood="😮‍💨">😮‍💨</span>
+          <span class="mood" data-mood="😢">😢</span>
+          <span class="mood" data-mood="🥰">🥰</span>
+          <span class="mood" data-mood="😴">😴</span>
+        </div>
+        <div class="section-label" style="margin-top:14px">今天发生了什么</div>
+        <textarea class="textarea" id="lifeEvent" placeholder="值得记住的事..." style="min-height:60px"></textarea>
+        <div class="section-label">今天的感受</div>
+        <textarea class="textarea" id="lifeFeel" placeholder="写写感受..." style="min-height:60px"></textarea>
+        <div class="section-label">感恩的三件小事</div>
+        <textarea class="textarea" id="lifeGratitude" placeholder="1.&#10;2.&#10;3." style="min-height:70px"></textarea>
+        <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="saveLife()">保存今日记录</button>
+      </div>
+      <div class="section-label">往期记录</div>
+      <div id="lifeHistory"></div>
+    </div>
+
+    <!-- ===== 页面4: 总览 ===== -->
+    <div class="page" id="page-overview">
+      <div class="card">
+        <div class="card-title"><span class="emoji">🗺️</span>账号矩阵</div>
+        <div class="overview-account">
+          <div class="overview-avatar" style="background:#FDF0EC">🌸</div>
+          <div class="overview-info"><div class="overview-name">鹿溪风</div><div class="overview-desc">书法文创产品 · 变现主力</div></div>
+        </div>
+        <div class="overview-account">
+          <div class="overview-avatar" style="background:#EBF1F5">🏠</div>
+          <div class="overview-info"><div class="overview-name">鹿住新家</div><div class="overview-desc">装修记录 · 场景背书</div></div>
+        </div>
+        <div class="overview-account">
+          <div class="overview-avatar" style="background:#EAF3EE">🌿</div>
+          <div class="overview-info"><div class="overview-name">鹿慢慢</div><div class="overview-desc">个人IP · 信任与人设</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">🔗</span>三账号联动逻辑</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-light)">
+          <b style="color:var(--text)">鹿慢慢（个人IP）</b> → 建立信任和人设<br>
+          <b style="color:var(--text)">鹿溪风（产品变现）</b> → 信任你→信任产品<br>
+          <b style="color:var(--text)">鹿住新家（场景背书）</b> → 家=产品使用场景<br>
+          <div style="margin-top:8px;padding:8px 10px;background:var(--primary-bg);border-radius:8px;font-size:12px">💡 联动原则：自然提及 > 硬引导，不要每条都导流</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">📅</span>本周发布统计</div>
+        <div id="weekStats"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">⏰</span>每日工作流</div>
+        <div style="font-size:13px;line-height:1.8">
+          <b>晨间 15min</b><br><span style="color:var(--text-light)">填今日计划 → 看昨日数据 → 灵感丢灵感箱</span><br>
+          <b style="margin-top:8px;display:block">创作时段</b><br><span style="color:var(--text-light)">集中拍摄，一次拍多条，碎片随手拍</span><br>
+          <b style="margin-top:8px;display:block">晚间 10min</b><br><span style="color:var(--text-light)">发布内容 → 写生活记录 → 灵感继续记录</span><br>
+          <b style="margin-top:8px;display:block">周日 30min</b><br><span style="color:var(--text-light)">三账号复盘 → 调整下周选题</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">☁️</span>云端同步（手机电脑同步）</div>
+        <div id="tokenSection" style="margin-bottom:10px">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:6px">首次使用请输入 GitHub Token（只需一次）：</div>
+          <div style="display:flex;gap:8px">
+            <input class="input" id="ghTokenInput" placeholder="ghp_..." style="flex:1;font-size:13px" type="password">
+            <button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;line-height:1.5">
+          上传数据到云端后，其他设备打开工作台点「从云端拉取」即可同步。<br>
+          建议：每次改完数据点一下「上传」，换设备前点一下「拉取」。
+        </div>
+        <div id="syncStatus" style="font-size:12px;color:var(--text-light);margin-bottom:8px"></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary btn-block" onclick="syncUpload()">☁️ 上传数据到云端</button>
+          <button class="btn btn-outline btn-block" onclick="syncDownload()">📥 从云端拉取数据</button>
+          <button class="btn btn-outline btn-block" onclick="autoSyncToggle()" id="autoSyncBtn">⏱️ 自动同步：关闭</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="emoji">⚡</span>本地操作</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-outline btn-block" onclick="exportData()">📤 导出备份文件</button>
+          <label style="display:flex"><span class="btn btn-outline btn-block" style="width:100%">📥 导入备份文件<input type="file" accept="application/json" style="display:none" onchange="importData(event)"></span></label>
+          <button class="btn btn-outline btn-block" style="color:#d66;border-color:#d66" onclick="clearAll()">🗑️ 清空所有数据</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:#ccc;padding:8px 0 4px">
+        鹿系工作台 · v2.0 · 支持多设备同步
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== 底部Tab栏 ========== -->
+  <div class="tabbar">
+    <div class="tab active" onclick="switchPage('plan')"><span class="tab-icon">📋</span><span>计划</span></div>
+    <div class="tab" onclick="switchPage('topics')"><span class="tab-icon">📚</span><span>选题</span></div>
+    <div class="tab" onclick="switchPage('idea')"><span class="tab-icon">💡</span><span>灵感</span></div>
+    <div class="tab" onclick="switchPage('life')"><span class="tab-icon">📖</span><span>生活</span></div>
+    <div class="tab" onclick="switchPage('overview')"><span class="tab-icon">🗺️</span><span>总览</span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== 数据层 ==================== */
+var DB = {
+  get: function(key, def){ try{ var v = localStorage.getItem('lu_'+key); return v? JSON.parse(v): def; }catch(e){ return def; } },
+  set: function(key, val){ localStorage.setItem('lu_'+key, JSON.stringify(val)); }
+};
+
+/* ==================== 选题数据 ==================== */
+var TOPICS = {
+  luxe: {
+    name: '鹿溪风',
+    desc: '把书法变成可日常使用的美物',
+    color: '#FDF0EC',
+    directions: [
+      { name: '产品展示', icon: '🎨', desc: '核心变现内容' },
+      { name: '书写过程', icon: '✍️', desc: '流量内容' },
+      { name: '生活场景', icon: '🏡', desc: '种草内容' },
+      { name: '创作幕后', icon: '🎬', desc: '信任内容' },
+      { name: '知识科普', icon: '📖', desc: '搜索流量' }
+    ],
+    topics: [
+      { d:0, t:'「我写的字变成了你桌上的杯垫」产品诞生全过程', tag:'product', dy:'加速拍摄制作过程+成品展示', xhs:'过程图+成品图9宫格' },
+      { d:0, t:'夏日限定·手写扇面系列', tag:'product', dy:'逐把扇子展开+古风BGM', xhs:'每把扇子特写+使用场景' },
+      { d:0, t:'书签书写：写给不同人的祝福语', tag:'product', dy:'写字过程+成品翻面', xhs:'文案选句+书写过程图' },
+      { d:0, t:'手机壁纸系列：手写文字壁纸', tag:'product', dy:'写字→拍照→做壁纸', xhs:'壁纸效果图+文字解读' },
+      { d:0, t:'节气系列：手写卡+对应文创', tag:'product', dy:'节气当天发布', xhs:'节气知识+手写卡+产品' },
+      { d:0, t:'帆布袋手写定制过程', tag:'product', dy:'定制全过程+客户反馈', xhs:'定制过程+成品+上身图' },
+      { d:1, t:'不同笔写同一个字效果对比', tag:'daily', dy:'逐支笔书写对比', xhs:'对比图+使用感受' },
+      { d:1, t:'100天打卡写同一个字记录变化', tag:'daily', dy:'系列更新每天一集', xhs:'阶段性合集对比图' },
+      { d:1, t:'挑战用最便宜的笔写出最好看的字', tag:'interact', dy:'反差感标题', xhs:'工具对比+成品' },
+      { d:1, t:'评论区点字系列：你说字我来写', tag:'interact', dy:'每期选评论写字', xhs:'评论截图+书写成品' },
+      { d:1, t:'沉浸式书写ASMR（无BGM）', tag:'daily', dy:'长镜头+环境音', xhs:'静态图+请开声音引导' },
+      { d:1, t:'修复一张被水洇坏的字', tag:'daily', dy:'过程展示', xhs:'before/after对比' },
+      { d:2, t:'手写字裱起来，出租屋变艺术展', tag:'daily', dy:'改造前后对比', xhs:'改造图+产品露出' },
+      { d:2, t:'送朋友礼物，手写卡片附上', tag:'daily', dy:'打包+写字过程', xhs:'礼物清单+手写卡特写' },
+      { d:2, t:'办公桌上的书法文创，同事都来问', tag:'product', dy:'桌面展示+逐件介绍', xhs:'桌面好物分享图文' },
+      { d:2, t:'婚礼/满月/乔迁手写贺礼定制', tag:'product', dy:'定制过程+收到方反应', xhs:'定制案例图+文案' },
+      { d:2, t:'节日装饰手写系列（季节性）', tag:'product', dy:'写春联+贴门上', xhs:'春联+门面效果' },
+      { d:3, t:'一件文创从想法到成品改了多少版', tag:'daily', dy:'草稿→打样→成品', xhs:'设计过程图文记录' },
+      { d:3, t:'选纸选墨选布料踩过的坑', tag:'skill', dy:'逐一展示材料+对比', xhs:'材料避坑图文' },
+      { d:3, t:'我的工作台长什么样', tag:'daily', dy:'工作台全景+介绍', xhs:'工作台好物清单' },
+      { d:3, t:'被客户催单的真实一天', tag:'daily', dy:'vlog形式', xhs:'忙碌一天图文记录' },
+      { d:3, t:'亏本做的第一单现在回头看', tag:'view', dy:'口述创业故事', xhs:'创业心得图文' },
+      { d:4, t:'新手学书法第一支笔怎么选', tag:'skill', dy:'—', xhs:'工具推荐图文' },
+      { d:4, t:'宣纸/元书纸/毛边纸区别', tag:'skill', dy:'—', xhs:'对比科普图文' },
+      { d:4, t:'为什么你写的字"没有神"？3个关键', tag:'skill', dy:'要点讲解', xhs:'图文教程' },
+      { d:4, t:'适合新手的10个入门字帖推荐', tag:'skill', dy:'—', xhs:'书单推荐图文' },
+      { d:4, t:'手写体vs正楷日常用哪个好', tag:'skill', dy:'对比演示', xhs:'对比图文' }
+    ]
+  },
+  home: {
+    name: '鹿住新家',
+    desc: '真实装修全程+避坑参考',
+    color: '#EBF1F5',
+    directions: [
+      { name: '进度日记', icon: '📍', desc: '主线内容' },
+      { name: '避坑干货', icon: '⚠️', desc: '高收藏内容' },
+      { name: '选材实录', icon: '🧱', desc: '决策内容' },
+      { name: '花费透明', icon: '💰', desc: '高互动内容' },
+      { name: '软装预告', icon: '🛋️', desc: '后续铺垫' }
+    ],
+    topics: [
+      { d:0, t:'装修第1天：毛坯房+我的改造计划', tag:'daily', dy:'房子全景+口述计划', xhs:'毛坯图+户型图+清单' },
+      { d:0, t:'水电走线全记录：走天还是走地', tag:'skill', dy:'工地实拍+讲解', xhs:'走线图+选择理由' },
+      { d:0, t:'水电验收：这几个地方一定要查', tag:'skill', dy:'验收过程实拍', xhs:'验收清单图文' },
+      { d:0, t:'水电结束花了多少钱？明细公开', tag:'daily', dy:'账单展示+口述', xhs:'花费明细表+图文' },
+      { d:0, t:'瓦工进场：贴砖第一天现场盯', tag:'daily', dy:'工地vlog', xhs:'贴砖过程+注意事项' },
+      { d:0, t:'木工/吊顶阶段记录', tag:'daily', dy:'工地实拍', xhs:'过程图文' },
+      { d:0, t:'硬装完工：毛坯→初见雏形', tag:'daily', dy:'改造前后对比混剪', xhs:'before/after对比图' },
+      { d:1, t:'水电改造踩的3个坑希望你别再踩', tag:'skill', dy:'口述+现场图', xhs:'避坑清单图文' },
+      { d:1, t:'这些插座位置后悔没留', tag:'skill', dy:'逐个位置展示', xhs:'插座位置清单图' },
+      { d:1, t:'水管走顶vs走地，我家选了___', tag:'skill', dy:'对比讲解', xhs:'对比图文+结论' },
+      { d:1, t:'装修预算怎么做？真实预算表分享', tag:'skill', dy:'账单展示', xhs:'预算表图文' },
+      { d:1, t:'半包vs全包vs清包怎么选', tag:'skill', dy:'口述对比', xhs:'对比图文' },
+      { d:1, t:'找工长/装修公司这5个问题必问', tag:'skill', dy:'口述+清单', xhs:'问题清单图文' },
+      { d:1, t:'网购vs实体店哪些该网购哪些别省', tag:'skill', dy:'举例讲解', xhs:'分类清单图文' },
+      { d:2, t:'瓷砖选购：跑了5家店最终选了___', tag:'skill', dy:'逛店实拍+对比', xhs:'瓷砖对比+选择理由' },
+      { d:2, t:'乳胶漆颜色怎么选，我家选了___', tag:'skill', dy:'色卡对比+上墙效果', xhs:'色卡+实拍图' },
+      { d:2, t:'卫浴花洒/马桶选购清单', tag:'skill', dy:'逐件展示', xhs:'选购清单图文' },
+      { d:2, t:'厨房橱柜定制对比了3家', tag:'skill', dy:'对比讲解', xhs:'对比表+结论' },
+      { d:2, t:'灯具：无主灯还是有主灯？', tag:'skill', dy:'方案对比+效果', xhs:'对比图文+方案' },
+      { d:2, t:'木门选购容易被忽略的细节', tag:'skill', dy:'逐扇门展示', xhs:'选购要点图文' },
+      { d:3, t:'水电阶段真实花费一分不藏', tag:'daily', dy:'账单展示', xhs:'明细表格图文' },
+      { d:3, t:'硬装总花费vs预算超了多少', tag:'daily', dy:'对比展示', xhs:'预算vs实际表格' },
+      { d:3, t:'装修到现在最值得花钱的地方', tag:'view', dy:'口述推荐', xhs:'推荐清单图文' },
+      { d:3, t:'装修到最后悔花钱的地方', tag:'view', dy:'口述避坑', xhs:'避雷清单图文' },
+      { d:3, t:'同样面积我家vs网友家花费对比', tag:'interact', dy:'对比展示', xhs:'对比表格' },
+      { d:4, t:'硬装结束我的软装灵感板', tag:'daily', dy:'灵感图展示', xhs:'灵感板拼图+思路' },
+      { d:4, t:'我想要的家的风格：参考图合集', tag:'daily', dy:'参考图轮播', xhs:'风格参考图文' },
+      { d:4, t:'软装预算计划：哪些值得投资', tag:'skill', dy:'口述+清单', xhs:'预算分配图文' },
+      { d:4, t:'入住前还要做的事：清单', tag:'skill', dy:'清单展示', xhs:'入住前to-do图文' }
+    ]
+  },
+  slow: {
+    name: '鹿慢慢',
+    desc: '审美实拍+创业妈妈+女性成长',
+    color: '#EAF3EE',
+    directions: [
+      { name: '审美实拍', icon: '📷', desc: '视觉吸粉主力 30%' },
+      { name: '创业妈妈', icon: '💪', desc: '共鸣连接 25%' },
+      { name: '女性成长', icon: '🌱', desc: '观点输出 20%' },
+      { name: '日常碎片', icon: '✨', desc: '人设立体 15%' },
+      { name: '互动系列', icon: '💬', desc: '粉丝维护 10%' }
+    ],
+    topics: [
+      { d:0, t:'早晨7点的家，光线最好看的时刻', tag:'daily', dy:'环境空镜+轻BGM', xhs:'空间实拍图文' },
+      { d:0, t:'我桌上的东西每件都有故事', tag:'daily', dy:'逐件展示+口述', xhs:'桌面好物图文' },
+      { d:0, t:'一周穿搭：带娃也能穿好看', tag:'daily', dy:'每天一套快剪', xhs:'穿搭合集图文' },
+      { d:0, t:'手机拍出好看照片的5个技巧', tag:'skill', dy:'演示+对比', xhs:'前后对比图文' },
+      { d:0, t:'家里的一束花能高兴好几天', tag:'daily', dy:'插花+摆放过程', xhs:'花艺+空间图文' },
+      { d:0, t:'傍晚散步路上拍到的好看瞬间', tag:'daily', dy:'街拍空镜合集', xhs:'街拍实拍图文' },
+      { d:0, t:'给自己泡一杯茶/咖啡的仪式感', tag:'daily', dy:'制作过程+环境', xhs:'饮品+空间图文' },
+      { d:1, t:'全职妈妈到创业我经历的第一个坎', tag:'view', dy:'口述故事', xhs:'创业故事图文' },
+      { d:1, t:'带娃和工作怎么平衡？说点真话', tag:'view', dy:'口述观点', xhs:'真实心得图文' },
+      { d:1, t:'创业第一年我赚了/亏了多少', tag:'daily', dy:'真实分享', xhs:'收入分享图文' },
+      { d:1, t:'带娃崩溃的瞬间我怎么熬过来的', tag:'view', dy:'口述+日常片段', xhs:'情感共鸣图文' },
+      { d:1, t:'老公/家人支持我创业吗', tag:'view', dy:'口述', xhs:'家庭关系图文' },
+      { d:1, t:'时间管理：我一天怎么分配', tag:'skill', dy:'一日时间轴', xhs:'时间管理图文' },
+      { d:1, t:'给想创业的妈妈：先想清楚3件事', tag:'skill', dy:'口述要点', xhs:'建议清单图文' },
+      { d:1, t:'创业后朋友圈变小但留下的都是真的', tag:'view', dy:'口述+日常', xhs:'感悟图文' },
+      { d:2, t:'30岁以后我学会的最重要的事', tag:'view', dy:'口述', xhs:'成长感悟图文' },
+      { d:2, t:'停止和别人比较以后我快乐多了', tag:'view', dy:'口述', xhs:'心态成长图文' },
+      { d:2, t:'读完让我改变的5本书', tag:'skill', dy:'逐本介绍', xhs:'书单推荐图文' },
+      { d:2, t:'学会独处是给自己最好的礼物', tag:'view', dy:'口述+独处日常', xhs:'独处方式图文' },
+      { d:2, t:'我如何克服"不够好"的焦虑', tag:'view', dy:'口述', xhs:'心理成长图文' },
+      { d:2, t:'经济独立给我带来了什么', tag:'view', dy:'口述', xhs:'女性独立图文' },
+      { d:2, t:'当妈妈以后我反而更爱自己了', tag:'view', dy:'口述', xhs:'妈妈成长图文' },
+      { d:2, t:'不要等"准备好了"才开始', tag:'view', dy:'口述', xhs:'行动力图文' },
+      { d:3, t:'和孩子的一天真实版本', tag:'daily', dy:'vlog', xhs:'日常图文' },
+      { d:3, t:'我的一天vlog：工作+带娃+自己', tag:'daily', dy:'全天vlog', xhs:'一日记录图文' },
+      { d:3, t:'最近在听的歌/看的剧/想的事', tag:'daily', dy:'分享', xhs:'近期喜欢图文' },
+      { d:3, t:'周末去了哪里发现了什么', tag:'daily', dy:'出行vlog', xhs:'出行实拍图文' },
+      { d:3, t:'今天的小确幸3件开心的事', tag:'daily', dy:'口述+日常画面', xhs:'感恩日记图文' },
+      { d:4, t:'问我anything：创业/带娃/生活随便问', tag:'interact', dy:'评论收集→回答', xhs:'问答合集图文' },
+      { d:4, t:'你们想知道的关于我的10件事', tag:'interact', dy:'自我介绍更新版', xhs:'自我介绍图文' },
+      { d:4, t:'粉丝投稿：你的故事我来读', tag:'interact', dy:'读粉丝留言', xhs:'故事分享图文' },
+      { d:4, t:'每月总结：这个月做了什么/学了什么', tag:'daily', dy:'月度复盘', xhs:'月度复盘图文' }
+    ]
+  }
+};
+
+var TAG_MAP = { product:'产品', daily:'日常', skill:'干货', view:'观点', interact:'互动' };
+var STATUS_LIST = [
+  { v:'idea', icon:'💡', label:'构想', cls:'st-idea' },
+  { v:'script', icon:'📝', label:'脚本', cls:'st-script' },
+  { v:'shoot', icon:'🎬', label:'拍摄', cls:'st-shoot' },
+  { v:'done', icon:'✅', label:'已发', cls:'st-done' },
+  { v:'review', icon:'📊', label:'已复盘', cls:'st-review' }
+];
+
+var ACCOUNTS = ['luxe','home','slow'];
+var currentAccount = 'luxe';
+var currentPage = 'plan';
+
+/* ==================== 页面切换 ==================== */
+function switchPage(name, evt){
+  currentPage = name;
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  var e = evt || window.event;
+  if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
+  else { var tabs = document.querySelectorAll('.tab'); var idx = ['plan','topics','idea','life','overview'].indexOf(name); if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active'); }
+  var titles = { plan:'今日计划', topics:'选题库', idea:'灵感记录', life:'生活记录', overview:'总览' };
+  document.getElementById('pageTitle').textContent = titles[name];
+  document.getElementById('content').scrollTop = 0;
+  if(name==='plan'){ renderDaily(); renderPlan(); }
+  if(name==='topics') renderTopics();
+  if(name==='idea') renderIdeas();
+  if(name==='life') renderLife();
+  if(name==='overview') renderOverview();
+}
+
+function switchAccount(acc, evt){
+  currentAccount = acc;
+  document.querySelectorAll('.subtab').forEach(function(t){ t.classList.remove('active'); });
+  var e = evt || window.event;
+  if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
+  else { var subs = document.querySelectorAll('.subtab'); var idx = ['luxe','home','slow'].indexOf(acc); if(idx>=0 && subs[idx]) subs[idx].classList.add('active'); }
+  renderTopics();
+}
+
+/* ==================== Toast ==================== */
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 1500);
+}
+
+/* ==================== 日期 ==================== */
+function todayKey(){ var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function formatDate(){
+  var d = new Date();
+  var days = ['日','一','二','三','四','五','六'];
+  return d.getMonth()+1+'月'+d.getDate()+'日 周'+days[d.getDay()];
+}
+
+/* ==================== 每日计划渲染 ==================== */
+function renderPlan(){
+  var key = todayKey();
+  var plan = DB.get('plan_'+key, { top3:[], todos:[], track:{}, data:{}, note:'' });
+  document.getElementById('planDateLong').textContent = formatDate();
+
+  // 三件最重要
+  var top3Html = '';
+  if(plan.top3.length === 0) top3Html = '<div class="empty">还没有添加，先想想今天最重要的事</div>';
+  plan.top3.forEach(function(item, i){
+    top3Html += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTop3('+i+')">'+(item.done?'✓':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTop3('+i+')">✕</span></div>';
+  });
+  document.getElementById('top3List').innerHTML = top3Html;
+
+  // 发布追踪
+  var trackAcc = [['luxe','鹿溪风'],['home','鹿住新家'],['slow','鹿慢慢']];
+  var trackHtml = '<tr><th>账号</th><th>抖音</th><th>小红书</th></tr>';
+  trackAcc.forEach(function(a){
+    var dy = plan.track[a[0]+'_dy'] || '⬜';
+    var xhs = plan.track[a[0]+'_xhs'] || '⬜';
+    trackHtml += '<tr><td style="font-weight:500">'+a[1]+'</td>'+
+      '<td><select onchange="setTrack(\''+a[0]+'\',\'dy\',this.value)">'+
+        '<option value="⬜" '+sel(dy,'⬜')+'>⬜未做</option>'+
+        '<option value="📝" '+sel(dy,'📝')+'>📝在做</option>'+
+        '<option value="✅" '+sel(dy,'✅')+'>✅已发</option>'+
+      '</select></td>'+
+      '<td><select onchange="setTrack(\''+a[0]+'\',\'xhs\',this.value)">'+
+        '<option value="⬜" '+sel(xhs,'⬜')+'>⬜未做</option>'+
+        '<option value="📝" '+sel(xhs,'📝')+'>📝在做</option>'+
+        '<option value="✅" '+sel(xhs,'✅')+'>✅已发</option>'+
+      '</select></td></tr>';
+  });
+  document.getElementById('trackTable').innerHTML = trackHtml;
+
+  // 其他待办
+  var todoHtml = '';
+  if(plan.todos.length === 0) todoHtml = '<div class="empty">暂无其他待办</div>';
+  plan.todos.forEach(function(item, i){
+    todoHtml += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTodo('+i+')">'+(item.done?'✓':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTodo('+i+')">✕</span></div>';
+  });
+  document.getElementById('todoList').innerHTML = todoHtml;
+
+  // 数据速记
+  var dataAcc = [['luxe','鹿溪风'],['home','鹿住新家'],['slow','鹿慢慢']];
+  var dataHtml = '';
+  dataAcc.forEach(function(a){
+    var dyVal = plan.data[a[0]+'_dy'] || '';
+    var xhsVal = plan.data[a[0]+'_xhs'] || '';
+    dataHtml += '<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:4px">'+a[1]+'</div>'+
+      '<div style="display:flex;gap:8px"><input class="input" style="flex:1;font-size:12px" placeholder="抖音数据" value="'+esc(dyVal)+'" oninput="setData(\''+a[0]+'\',\'dy\',this.value)">'+
+      '<input class="input" style="flex:1;font-size:12px" placeholder="小红书数据" value="'+esc(xhsVal)+'" oninput="setData(\''+a[0]+'\',\'xhs\',this.value)"></div></div>';
+  });
+  document.getElementById('dataQuick').innerHTML = dataHtml;
+
+  // 小记
+  document.getElementById('dailyNote').value = plan.note || '';
+}
+
+function sel(val, opt){ return val === opt ? 'selected' : ''; }
+function esc(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getPlan(){ var key = todayKey(); var p = DB.get('plan_'+key, { top3:[], todos:[], track:{}, data:{}, note:'' }); return p; }
+function savePlan(p){ DB.set('plan_'+todayKey(), p); }
+
+function addTop3(){ var inp = document.getElementById('top3Input'); if(!inp.value.trim()) return; var p = getPlan(); p.top3.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); }
+function toggleTop3(i){ var p = getPlan(); p.top3[i].done = !p.top3[i].done; savePlan(p); renderPlan(); }
+function delTop3(i){ var p = getPlan(); p.top3.splice(i,1); savePlan(p); renderPlan(); }
+
+function addTodo(){ var inp = document.getElementById('todoInput'); if(!inp.value.trim()) return; var p = getPlan(); p.todos.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); }
+function toggleTodo(i){ var p = getPlan(); p.todos[i].done = !p.todos[i].done; savePlan(p); renderPlan(); }
+function delTodo(i){ var p = getPlan(); p.todos.splice(i,1); savePlan(p); renderPlan(); }
+
+function setTrack(acc, plat, val){ var p = getPlan(); p.track[acc+'_'+plat] = val; savePlan(p); }
+function setData(acc, plat, val){ var p = getPlan(); p.data[acc+'_'+plat] = val; savePlan(p); }
+
+// 小记自动保存
+document.addEventListener('input', function(e){ if(e.target.id === 'dailyNote'){ var p = getPlan(); p.note = e.target.value; savePlan(p); } });
+
+/* ==================== 选题库渲染 ==================== */
+function renderTopics(){
+  var acc = TOPICS[currentAccount];
+  var statuses = DB.get('topic_status', {});
+  var html = '';
+
+  // 账号信息
+  html += '<div class="card" style="background:'+acc.color+';border:none">'+
+    '<div style="font-size:16px;font-weight:600">'+acc.name+'</div>'+
+    '<div style="font-size:12px;color:var(--text-light);margin-top:2px">'+acc.desc+'</div></div>';
+
+  // 统计进度
+  var accTopics = acc.topics;
+  var doneCount = 0;
+  accTopics.forEach(function(t, i){ if(statuses[currentAccount+'_'+i] === 'done' || statuses[currentAccount+'_'+i] === 'review') doneCount++; });
+  var pct = Math.round(doneCount/accTopics.length*100);
+  html += '<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px"><span>选题完成进度</span><span style="font-weight:600">'+doneCount+'/'+accTopics.length+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+
+  // 按方向分组
+  acc.directions.forEach(function(dir, di){
+    html += '<div class="section-label">'+dir.icon+' '+dir.name+' <span style="color:#bbb;font-weight:400">· '+dir.desc+'</span></div>';
+    accTopics.forEach(function(t, i){
+      if(t.d !== di) return;
+      var stKey = currentAccount+'_'+i;
+      var st = statuses[stKey] || 'idea';
+      var stObj = STATUS_LIST.find(function(s){ return s.v === st; });
+      html += '<div class="topic-item" onclick="cycleStatus(\''+stKey+'\')">'+
+        '<div class="topic-head"><div class="topic-title">'+t.t+'</div><div class="topic-status '+stObj.cls+'">'+stObj.icon+'</div></div>'+
+        '<div class="topic-meta"><span class="tag tag-'+t.tag+'">'+TAG_MAP[t.tag]+'</span></div>'+
+        '<div class="topic-platforms"><span>🎬 '+t.dy+'</span><span>📕 '+t.xhs+'</span></div>'+
+        '<div style="font-size:10px;color:#bbb;margin-top:4px">点击切换状态 → '+stObj.label+'</div>'+
+        '</div>';
+    });
+  });
+
+  document.getElementById('topicsContainer').innerHTML = html;
+}
+
+function cycleStatus(key){
+  var statuses = DB.get('topic_status', {});
+  var cur = statuses[key] || 'idea';
+  var idx = STATUS_LIST.findIndex(function(s){ return s.v === cur; });
+  idx = (idx + 1) % STATUS_LIST.length;
+  statuses[key] = STATUS_LIST[idx].v;
+  DB.set('topic_status', statuses);
+  renderTopics();
+  toast('状态 → ' + STATUS_LIST[idx].label);
+}
+
+/* ==================== 灵感记录渲染 ==================== */
+function renderIdeas(){
+  var ideas = DB.get('ideas', []);
+  var html = '';
+  if(ideas.length === 0){
+    html = '<div class="empty">还没有灵感，想到什么随时记下来</div>';
+  } else {
+    ideas.slice().reverse().forEach(function(idea, ri){
+      var i = ideas.length - 1 - ri;
+      html += '<div class="idea-item">'+
+        '<div class="idea-top"><span class="idea-date">'+idea.date+'</span>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+        (idea.account ? '<span class="idea-account">'+idea.account+'</span>' : '')+
+        '<span class="idea-del" onclick="delIdea('+i+')">✕</span></div></div>'+
+        '<div class="idea-content">'+esc(idea.content)+'</div></div>';
+    });
+  }
+  document.getElementById('ideaList').innerHTML = html;
+}
+
+function addIdea(){
+  var inp = document.getElementById('ideaInput');
+  var acc = document.getElementById('ideaAccount').value;
+  if(!inp.value.trim()) return;
+  var ideas = DB.get('ideas', []);
+  ideas.push({ date: todayKey(), content: inp.value.trim(), account: acc });
+  DB.set('ideas', ideas);
+  inp.value = '';
+  document.getElementById('ideaAccount').value = '';
+  renderIdeas();
+  toast('灵感已记录 💡');
+}
+
+function delIdea(i){
+  var ideas = DB.get('ideas', []);
+  ideas.splice(i, 1);
+  DB.set('ideas', ideas);
+  renderIdeas();
+}
+
+/* ==================== 生活记录渲染 ==================== */
+var currentLifeDate = todayKey();
+
+function renderLife(){
+  document.getElementById('lifeDate').textContent = formatDate() + ' · ' + currentLifeDate;
+  var entry = DB.get('life_'+currentLifeDate, { mood:'', event:'', feel:'', gratitude:'' });
+
+  // 心情
+  document.querySelectorAll('.mood').forEach(function(m){
+    m.classList.toggle('selected', m.dataset.mood === entry.mood);
+  });
+
+  document.getElementById('lifeEvent').value = entry.event || '';
+  document.getElementById('lifeFeel').value = entry.feel || '';
+  document.getElementById('lifeGratitude').value = entry.gratitude || '';
+
+  // 历史记录
+  var keys = [];
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_life_') === 0){
+      var date = k.replace('lu_life_','');
+      if(date !== currentLifeDate) keys.push(date);
+    }
+  }
+  keys.sort().reverse();
+  var html = '';
+  if(keys.length === 0){
+    html = '<div class="empty">还没有往期记录</div>';
+  } else {
+    keys.slice(0, 20).forEach(function(date){
+      var e = DB.get('life_'+date, {});
+      html += '<div class="idea-item" onclick="viewLife(\''+date+'\')">'+
+        '<div class="idea-top"><span class="idea-date">'+date+'</span>'+(e.mood?'<span style="font-size:18px">'+e.mood+'</span>':'')+'</div>'+
+        '<div class="idea-content">'+(e.event ? esc(e.event.slice(0,60))+(e.event.length>60?'...':'') : '（无内容）')+'</div></div>';
+    });
+  }
+  document.getElementById('lifeHistory').innerHTML = html;
+}
+
+function viewLife(date){
+  currentLifeDate = date;
+  renderLife();
+  document.getElementById('content').scrollTop = 0;
+}
+
+document.addEventListener('click', function(e){
+  if(e.target.classList.contains('mood')){
+    var m = e.target.dataset.mood;
+    var entry = DB.get('life_'+currentLifeDate, { mood:'', event:'', feel:'', gratitude:'' });
+    entry.mood = entry.mood === m ? '' : m;
+    DB.set('life_'+currentLifeDate, entry);
+    renderLife();
+  }
+});
+
+document.addEventListener('input', function(e){
+  if(e.target.id === 'lifeEvent' || e.target.id === 'lifeFeel' || e.target.id === 'lifeGratitude'){
+    var entry = DB.get('life_'+currentLifeDate, { mood:'', event:'', feel:'', gratitude:'' });
+    entry.event = document.getElementById('lifeEvent').value;
+    entry.feel = document.getElementById('lifeFeel').value;
+    entry.gratitude = document.getElementById('lifeGratitude').value;
+    DB.set('life_'+currentLifeDate, entry);
+  }
+});
+
+function saveLife(){
+  toast('已保存 📖');
+}
+
+/* ==================== 总览渲染 ==================== */
+function renderOverview(){
+  // 本周发布统计
+  var statuses = DB.get('topic_status', {});
+  var stats = { luxe:{done:0,total:0}, home:{done:0,total:0}, slow:{done:0,total:0} };
+  ACCOUNTS.forEach(function(acc){
+    stats[acc].total = TOPICS[acc].topics.length;
+  });
+  for(var key in statuses){
+    var parts = key.split('_');
+    var acc = parts[0];
+    if(stats[acc] && (statuses[key] === 'done' || statuses[key] === 'review')) stats[acc].done++;
+  }
+  var names = { luxe:'鹿溪风', home:'鹿住新家', slow:'鹿慢慢' };
+  var html = '';
+  ACCOUNTS.forEach(function(acc){
+    var s = stats[acc];
+    var pct = s.total ? Math.round(s.done/s.total*100) : 0;
+    html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>'+names[acc]+'</span><span style="font-weight:600">'+s.done+'/'+s.total+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+  });
+  document.getElementById('weekStats').innerHTML = html;
+}
+
+/* ==================== 每日选题推荐系统 ==================== */
+
+// 装修进度阶段（用户可更新）
+var HOME_STAGE = DB.get('home_stage', 'shuidian'); // shuidian/wagong/mugong/qiangmian/yingzhuang/ruanzhuang
+var STAGE_NAMES = { shuidian:'水电阶段', wagong:'瓦工阶段', mugong:'木工阶段', qiangmian:'墙面阶段', yingzhuang:'硬装完工', ruanzhuang:'软装阶段' };
+var STAGE_ORDER = ['shuidian','wagong','mugong','qiangmian','yingzhuang','ruanzhuang'];
+
+function getSeason(){
+  var m = new Date().getMonth() + 1;
+  if(m >= 3 && m <= 5) return 'spring';
+  if(m >= 6 && m <= 8) return 'summer';
+  if(m >= 9 && m <= 11) return 'autumn';
+  return 'winter';
+}
+
+function getWeekNum(){
+  var d = new Date();
+  var onejan = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+}
+
+function getSeasonalTag(){
+  var m = new Date().getMonth() + 1;
+  var d = new Date().getDate();
+  var festivals = {
+    '1-1':'元旦', '2-14':'情人节', '3-8':'妇女节', '3-12':'植树节',
+    '5-1':'劳动节', '5-20':'520', '6-1':'儿童节', '7-1':'建党节',
+    '8-15':'七夕(近)', '9-10':'教师节', '10-1':'国庆节', '11-11':'双11',
+    '12-25':'圣诞节', '12-31':'跨年'
+  };
+  for(var i = 0; i < 7; i++){
+    var testDate = new Date();
+    testDate.setDate(d + i);
+    var k = (testDate.getMonth()+1) + '-' + testDate.getDate();
+    if(festivals[k]) return festivals[k];
+  }
+  var terms = ['小寒','大寒','立春','雨水','惊蛰','春分','清明','谷雨','立夏','小满','芒种','夏至','小暑','大暑','立秋','处暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'];
+  var termDates = ['1-6','1-20','2-4','2-19','3-6','3-21','4-5','4-20','5-6','5-21','6-6','6-21','7-7','7-23','8-8','8-23','9-8','9-23','10-8','10-24','11-7','11-22','12-7','12-22'];
+  for(var j = 0; j < termDates.length; j++){
+    var parts = termDates[j].split('-');
+    var tm = parseInt(parts[0]), td = parseInt(parts[1]);
+    var diff = (tm - m) * 30 + (td - d);
+    if(diff >= 0 && diff <= 7) return terms[j] + '(近)';
+  }
+  return null;
+}
+
+var SEASONAL_BOOST = {
+  spring: {
+    luxe: ['书签书写：写给不同人的祝福语','帆布袋手写定制过程'],
+    home: ['灯具：无主灯还是有主灯？','乳胶漆颜色怎么选'],
+    slow: ['家里的一束花能高兴好几天','一周穿搭：带娃也能穿好看']
+  },
+  summer: {
+    luxe: ['夏日限定·手写扇面系列','手机壁纸系列：手写文字壁纸'],
+    home: ['灯具：无主灯还是有主灯？','装修预算怎么做？真实预算表分享'],
+    slow: ['早晨7点的家，光线最好看的时刻','给自己泡一杯茶/咖啡的仪式感']
+  },
+  autumn: {
+    luxe: ['书签书写：写给不同人的祝福语','节气系列：手写卡+对应文创'],
+    home: ['木门选购容易被忽略的细节','软装预算计划：哪些值得投资'],
+    slow: ['那些读完让我改变的5本书','学会独处是给自己最好的礼物']
+  },
+  winter: {
+    luxe: ['节日装饰手写系列（季节性）','手机壁纸系列：手写文字壁纸'],
+    home: ['软装预算计划：哪些值得投资','入住前还要做的事：清单'],
+    slow: ['最近在听的歌/看的剧/想的事','今天的小确幸3件开心的事']
+  }
+};
+
+var HOME_STAGE_TOPICS = {
+  shuidian: ['水电走线全记录：走天还是走地','水电验收：这几个地方一定要查','水电结束花了多少钱？明细公开','这些插座位置后悔没留','水管走顶vs走地，我家选了___','装修预算怎么做？真实预算表分享','半包vs全包vs清包怎么选','找工长/装修公司这5个问题必问'],
+  wagong: ['瓦工进场：贴砖第一天现场盯','瓷砖选购：跑了5家店最终选了___','水电改造踩的3个坑希望你别再踩','网购vs实体店哪些该网购哪些别省','水电阶段真实花费一分不藏'],
+  mugong: ['木工/吊顶阶段记录','灯具：无主灯还是有主灯？','木门选购容易被忽略的细节','这些插座位置后悔没留'],
+  qiangmian: ['乳胶漆颜色怎么选，我家选了___','硬装完工：毛坯→初见雏形','硬装总花费vs预算超了多少','装修到最后悔花钱的地方'],
+  yingzhuang: ['硬装完工：毛坯→初见雏形','硬装总花费vs预算超了多少','装修到现在最值得花钱的地方','装修到最后悔花钱的地方','同样面积我家vs网友家花费对比'],
+  ruanzhuang: ['硬装结束我的软装灵感板','我想要的家的风格：参考图合集','软装预算计划：哪些值得投资','入住前还要做的事：清单','灯具：无主灯还是有主灯？']
+};
+
+// 伪随机数生成（基于日期种子，保证同一天推荐一致）
+function seededRandom(seed){
+  var x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function getDaySeed(){
+  var d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+
+// 给候选选题打分排序
+function scoreTopics(acc, allTopics){
+  var statuses = DB.get('topic_status', {});
+  var season = getSeason();
+  var candidates = [];
+  var stageTopics = (acc === 'home') ? (HOME_STAGE_TOPICS[HOME_STAGE] || HOME_STAGE_TOPICS.shuidian) : null;
+
+  allTopics.forEach(function(t, i){
+    // 鹿住新家：只在当前装修阶段相关的选题里挑
+    if(acc === 'home' && stageTopics.indexOf(t.t) === -1) return;
+
+    var st = statuses[acc+'_'+i] || 'idea';
+    var score = 0;
+
+    // 未做的选题优先级最高
+    if(st === 'idea') score += 10;
+    else if(st === 'script' || st === 'shoot') score += 5; // 进行中次高
+    else score += 1; // 已发的作为备选
+
+    // 季节性加分
+    var boost = (SEASONAL_BOOST[season][acc] || []).indexOf(t.t) !== -1 ? 3 : 0;
+    score += boost;
+
+    // 多样化：不同方向的内容穿插
+    score += (t.tag === 'product' || t.tag === 'daily') ? 0.5 : 0;
+
+    candidates.push({ idx:i, topic:t, score:score, status:st });
+  });
+
+  candidates.sort(function(a, b){ return b.score - a.score; });
+  return candidates;
+}
+
+// 生成每日推荐
+function generateDaily(forceRefresh){
+  var dayKey = todayKey();
+  var saved = DB.get('daily_rec', null);
+  if(saved && saved.day === dayKey && !forceRefresh) return saved;
+
+  var seed = getDaySeed();
+  var result = { day: dayKey, picks: {} };
+
+  ACCOUNTS.forEach(function(acc){
+    var scored = scoreTopics(acc, TOPICS[acc].topics);
+    var unused = scored.filter(function(c){ return c.status === 'idea'; });
+    var pool = unused.length >= 3 ? unused : scored; // 未用不够就用全部
+
+    // 基于日期种子从高分池里选一个
+    var pickIndex = Math.floor(seededRandom(seed + acc.length) * Math.min(pool.length, 8));
+    result.picks[acc] = pool[pickIndex];
+
+    seed += 31;
+  });
+
+  DB.set('daily_rec', result);
+  return result;
+}
+
+// 生成本周推荐池（3个账号各3个，不重复每日推荐）
+function generateWeekly(forceRefresh){
+  var weekKey = getWeekNum() + '-' + new Date().getFullYear();
+  var saved = DB.get('weekly_rec', null);
+  if(saved && saved.week === weekKey && !forceRefresh) return saved;
+
+  var daily = generateDaily(false);
+  var result = { week: weekKey, season: getSeason(), seasonalTag: getSeasonalTag(), picks: {} };
+
+  ACCOUNTS.forEach(function(acc){
+    var scored = scoreTopics(acc, TOPICS[acc].topics);
+    var picks = [];
+    var used = {};
+
+    // 把今日推荐的先排除
+    if(daily.picks[acc]) used[daily.picks[acc].idx] = true;
+
+    for(var i = 0; i < scored.length && picks.length < 3; i++){
+      if(used[scored[i].idx]) continue;
+      picks.push(scored[i]);
+      used[scored[i].idx] = true;
+    }
+
+    result.picks[acc] = picks;
+  });
+
+  DB.set('weekly_rec', result);
+  return result;
+}
+
+// 渲染每日推荐
+function renderDaily(){
+  var rec = generateDaily(false);
+  var names = { luxe:'🌸 鹿溪风', home:'🏠 鹿住新家', slow:'🌿 鹿慢慢' };
+
+  // 日标签
+  var dayLabel = '';
+  var tag = getSeasonalTag();
+  if(tag) dayLabel += tag;
+  document.getElementById('dayLabel').textContent = dayLabel;
+
+  var html = '';
+  ACCOUNTS.forEach(function(acc){
+    var pick = rec.picks[acc];
+    if(!pick) return;
+    var stObj = STATUS_LIST.find(function(s){ return s.v === pick.status; });
+    var tagCls = 'tag-' + pick.topic.tag;
+
+    html += '<div style="margin-bottom:10px">';
+    html += '<div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px">'+names[acc]+'</div>';
+    html += '<div class="topic-item" style="padding:10px 12px" onclick="jumpToTopic(\''+acc+'\','+pick.idx+')">';
+    html += '<div class="topic-head"><div class="topic-title" style="font-size:13px">'+pick.topic.t+'</div>';
+    html += '<div class="topic-status '+stObj.cls+'" style="font-size:15px">'+stObj.icon+'</div></div>';
+    html += '<div class="topic-meta"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
+    html += '<div class="topic-platforms" style="margin-top:4px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  document.getElementById('dailyRecommend').innerHTML = html;
+}
+
+// 渲染本周推荐
+function renderWeekly(){
+  var rec = generateWeekly(false);
+  var names = { luxe:'🌸 鹿溪风', home:'🏠 鹿住新家', slow:'🌿 鹿慢慢' };
+
+  document.getElementById('homeStageLabel').textContent = STAGE_NAMES[HOME_STAGE];
+
+  var html = '';
+  ACCOUNTS.forEach(function(acc){
+    var picks = rec.picks[acc] || [];
+    html += '<div style="margin-bottom:14px">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:6px">'+names[acc]+'</div>';
+
+    picks.forEach(function(pick){
+      var stObj = STATUS_LIST.find(function(s){ return s.v === pick.status; });
+      var tagCls = 'tag-' + pick.topic.tag;
+      html += '<div class="topic-item" style="margin-bottom:6px;padding:10px 12px" onclick="jumpToTopic(\''+acc+'\','+pick.idx+')">';
+      html += '<div class="topic-head"><div class="topic-title" style="font-size:13px">'+pick.topic.t+'</div>';
+      html += '<div class="topic-status '+stObj.cls+'" style="font-size:15px">'+stObj.icon+'</div></div>';
+      html += '<div class="topic-meta"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
+      html += '<div class="topic-platforms" style="margin-top:4px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('weeklyRecommend').innerHTML = html;
+}
+
+// 切换本周推荐显示/隐藏
+function toggleWeeklyView(){
+  var card = document.getElementById('weeklyCard');
+  var btn = document.getElementById('toggleWeeklyBtn');
+  if(card.style.display === 'none'){
+    renderWeekly();
+    card.style.display = 'block';
+    btn.textContent = '🔼 收起本周推荐';
+  } else {
+    card.style.display = 'none';
+    btn.textContent = '📅 查看本周全部推荐';
+  }
+}
+
+// 切换装修进度
+function toggleHomeStage(){
+  var curIdx = STAGE_ORDER.indexOf(HOME_STAGE);
+  var nextIdx = (curIdx + 1) % STAGE_ORDER.length;
+  HOME_STAGE = STAGE_ORDER[nextIdx];
+  DB.set('home_stage', HOME_STAGE);
+
+  // 重新生成推荐
+  generateDaily(true);
+  generateWeekly(true);
+  renderDaily();
+  renderWeekly();
+
+  toast('装修进度切换为：' + STAGE_NAMES[HOME_STAGE] + ' 🏠');
+}
+
+// 跳转到选题库对应选题
+function jumpToTopic(acc, idx){
+  switchPage('topics', window.event);
+  currentAccount = acc;
+  document.querySelectorAll('.subtab').forEach(function(t){ t.classList.remove('active'); });
+  var subs = document.querySelectorAll('.subtab');
+  var subIdx = ['luxe','home','slow'].indexOf(acc);
+  if(subIdx >= 0 && subs[subIdx]) subs[subIdx].classList.add('active');
+  renderTopics();
+
+  setTimeout(function(){
+    var items = document.querySelectorAll('.topic-item');
+    if(items[idx]){
+      items[idx].scrollIntoView({ behavior:'smooth', block:'center' });
+      items[idx].style.borderColor = 'var(--primary)';
+      setTimeout(function(){ items[idx].style.borderColor = ''; }, 2000);
+    }
+  }, 300);
+}
+
+// 强制刷新推荐
+function refreshWeekly(){
+  generateDaily(true);
+  generateWeekly(true);
+  renderDaily();
+  renderWeekly();
+  toast('已重新生成推荐 🌟');
+}
+
+/* ==================== 数据导入导出 ==================== */
+function exportData(){
+  var data = {};
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_') === 0) data[k] = localStorage.getItem(k);
+  }
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '鹿系工作台备份_'+todayKey()+'.json';
+  a.click();
+  toast('已导出备份文件 📤');
+}
+
+function importData(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      var data = JSON.parse(ev.target.result);
+      for(var k in data){ if(k.indexOf('lu_') === 0) localStorage.setItem(k, data[k]); }
+      toast('数据导入成功 📥');
+      renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
+    } catch(err){
+      toast('导入失败：文件格式错误');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAll(){
+  if(!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
+  var keys = [];
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_') === 0) keys.push(k);
+  }
+  keys.forEach(function(k){ localStorage.removeItem(k); });
+  toast('已清空所有数据');
+  renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
+}
+
+/* ==================== GitHub 云端同步 ==================== */
+var GITHUB_OWNER = 'mcdhyn4wr4-glitch';
+var GITHUB_REPO = 'luxi-workdesk';
+var GITHUB_FILE = 'data.json';
+var SYNC_API = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_FILE;
+var autoSyncTimer = null;
+
+function getGHToken(){
+  return DB.get('gh_token', '');
+}
+
+function setGHToken(token){
+  DB.set('gh_token', token);
+}
+
+function saveToken(){
+  var inp = document.getElementById('ghTokenInput');
+  var token = inp.value.trim();
+  if(!token){ toast('请输入Token'); return; }
+  setGHToken(token);
+  document.getElementById('tokenSection').style.display = 'none';
+  toast('Token已保存，可以同步了 ✅');
+  checkSyncStatus();
+}
+
+function checkTokenExists(){
+  var token = getGHToken();
+  var section = document.getElementById('tokenSection');
+  if(token){
+    section.style.display = 'none';
+  } else {
+    section.style.display = 'block';
+  }
+  return !!token;
+}
+
+function getAllLocalData(){
+  var data = {};
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_') === 0) data[k] = localStorage.getItem(k);
+  }
+  return data;
+}
+
+function restoreLocalData(data){
+  // 先清除旧的lu_数据
+  var keys = [];
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_') === 0) keys.push(k);
+  }
+  keys.forEach(function(k){ localStorage.removeItem(k); });
+  // 写入新数据
+  for(var k in data){ localStorage.setItem(k, data[k]); }
+}
+
+function setSyncStatus(msg, color){
+  var el = document.getElementById('syncStatus');
+  if(el){ el.textContent = msg; el.style.color = color || 'var(--text-light)'; }
+}
+
+function syncUpload(){
+  if(!checkTokenExists()){ toast('请先输入GitHub Token'); return; }
+  var data = getAllLocalData();
+  if(Object.keys(data).length === 0){
+    toast('没有数据可上传');
+    return;
+  }
+  setSyncStatus('正在上传...', 'var(--blue)');
+  var content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+
+  // 先获取当前文件的sha（如果存在）
+  fetch(SYNC_API, {
+    method: 'GET',
+    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+  }).then(function(r){
+    if(r.status === 404) return null;
+    return r.json();
+  }).then(function(existing){
+    var body = {
+      message: '更新工作台数据 ' + new Date().toLocaleString('zh-CN'),
+      content: content
+    };
+    if(existing && existing.sha) body.sha = existing.sha;
+
+    return fetch(SYNC_API, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + getGHToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+      body: JSON.stringify(body)
+    });
+  }).then(function(r){ return r.json(); }).then(function(result){
+    if(result && result.content){
+      var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      setSyncStatus('✅ 已上传 · ' + time, 'var(--green)');
+      toast('数据已上传到云端 ☁️');
+    } else {
+      setSyncStatus('❌ 上传失败: ' + (result.message || '未知错误'), '#d66');
+      toast('上传失败: ' + (result.message || ''));
+    }
+  }).catch(function(err){
+    setSyncStatus('❌ 网络错误: ' + err.message, '#d66');
+    toast('网络错误: ' + err.message);
+  });
+}
+
+function syncDownload(){
+  if(!checkTokenExists()){ toast('请先输入GitHub Token'); return; }
+  setSyncStatus('正在从云端拉取...', 'var(--blue)');
+  fetch(SYNC_API, {
+    method: 'GET',
+    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+  }).then(function(r){
+    if(r.status === 404){ setSyncStatus('云端还没有数据，先上传一次', 'var(--text-light)'); throw new Error('no data'); }
+    return r.json();
+  }).then(function(result){
+    if(!result.content) throw new Error('no content');
+    var data = JSON.parse(decodeURIComponent(escape(atob(result.content.replace(/\n/g,'')))));
+    restoreLocalData(data);
+    var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    setSyncStatus('✅ 已拉取 · ' + time, 'var(--green)');
+    toast('数据已从云端同步 📥');
+    // 重新渲染所有页面
+    renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
+  }).catch(function(err){
+    if(err.message !== 'no data'){
+      setSyncStatus('❌ 拉取失败: ' + err.message, '#d66');
+      toast('拉取失败');
+    }
+  });
+}
+
+function autoSyncToggle(){
+  var btn = document.getElementById('autoSyncBtn');
+  if(autoSyncTimer){
+    clearInterval(autoSyncTimer);
+    autoSyncTimer = null;
+    btn.textContent = '⏱️ 自动同步：关闭';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline');
+    toast('自动同步已关闭');
+  } else {
+    // 开启自动同步：每5分钟上传一次
+    syncUpload(); // 立即上传一次
+    autoSyncTimer = setInterval(function(){ syncUpload(); }, 5 * 60 * 1000);
+    btn.textContent = '⏱️ 自动同步：开启（5分钟）';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-primary');
+    toast('自动同步已开启');
+  }
+}
+
+// 页面加载时检查云端是否有数据，显示同步状态
+function checkSyncStatus(){
+  setSyncStatus('检查云端状态...', 'var(--text-light)');
+  fetch(SYNC_API, {
+    method: 'GET',
+    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+  }).then(function(r){
+    if(r.status === 404){ setSyncStatus('云端暂无数据，建议上传一次', 'var(--text-light)'); return null; }
+    if(!r.ok){ setSyncStatus('云端状态: HTTP ' + r.status, 'var(--text-light)'); return null; }
+    return r.json();
+  }).then(function(result){
+    if(result && result.content){
+      var date = new Date(result.commit.committer.date);
+      var time = date.toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      setSyncStatus('☁️ 云端最后更新: ' + time, 'var(--green)');
+    }
+  }).catch(function(err){ setSyncStatus('网络错误: ' + err.message, 'var(--text-light)'); });
+}
+
+/* ==================== 初始化 ==================== */
+document.getElementById('topDate').textContent = formatDate();
+renderDaily();
+renderPlan();
+renderTopics();
+renderIdeas();
+renderLife();
+renderOverview();
+checkTokenExists();
+if(getGHToken()){ checkSyncStatus(); }
+</script>
+</body>
+</html>
