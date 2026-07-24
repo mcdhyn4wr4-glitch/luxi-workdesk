@@ -1198,10 +1198,12 @@ function saveToken(){
 function checkTokenExists(){
   var token = getGHToken();
   var section = document.getElementById('tokenSection');
-  if(token){
-    section.style.display = 'none';
-  } else {
-    section.style.display = 'block';
+  if(section){
+    section.style.display = token ? 'none' : 'block';
+  }
+  // 如果没有token，在总览页渲染时提示
+  if(!token && currentPage === 'overview'){
+    setSyncStatus('请先输入GitHub Token', 'var(--accent)');
   }
   return !!token;
 }
