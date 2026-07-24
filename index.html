@@ -143,6 +143,29 @@ button{cursor:pointer}
 /* 进度条 */
 .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
 .progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+
+/* 统计报告 */
+.report-section{margin-bottom:18px}
+.report-section-title{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:4px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:var(--primary);line-height:1.2}
+.stat-label{font-size:11px;color:var(--text-light);margin-top:2px}
+.stat-box.accent .stat-num{color:var(--accent)}
+.stat-box.green .stat-num{color:var(--green)}
+.stat-box.blue .stat-num{color:var(--blue)}
+.stat-box.pink .stat-num{color:var(--pink)}
+.bar-chart{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.bar-label{width:60px;flex-shrink:0;color:var(--text-light)}
+.bar-track{flex:1;height:18px;background:var(--border);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px;color:#fff;font-weight:600;min-width:24px}
+.pie-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.pie-legend{display:flex;flex-direction:column;gap:4px;flex:1}
+.pie-item{display:flex;align-items:center;gap:6px;font-size:12px}
+.pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.report-summary{background:var(--primary-bg);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6;color:var(--primary);margin-top:10px}
+.report-empty{text-align:center;padding:20px 0;color:#ccc;font-size:13px}
 </style>
 </head>
 <body>
@@ -235,8 +258,12 @@ button{cursor:pointer}
     <!-- ===== 页面2: 灵感记录 ===== -->
     <div class="page" id="page-idea">
       <div class="card">
-        <div class="card-title"><span class="emoji">💡</span>快速记录灵感</div>
-        <textarea class="textarea" id="ideaInput" placeholder="想到什么写什么，不用完整..." style="min-height:70px"></textarea>
+        <div class="card-title">
+          <span class="emoji">💡</span>快速记录灵感
+          <button id="voiceBtn" class="btn btn-outline btn-sm" style="margin-left:auto;padding:5px 10px;font-size:12px" onclick="toggleVoice()">🎤 语音输入</button>
+        </div>
+        <textarea class="textarea" id="ideaInput" placeholder="想到什么写什么，不用完整...也可以点语音输入" style="min-height:70px"></textarea>
+        <div id="voiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:6px;text-align:center">🔴 录音中... 点击停止</div>
         <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
           <select class="input" id="ideaAccount" style="flex:1;font-size:13px">
             <option value="">选择归属账号（可选）</option>
@@ -306,9 +333,17 @@ button{cursor:pointer}
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="emoji">📅</span>本周发布统计</div>
-        <div id="weekStats"></div>
+      <!-- 统计报告系统 -->
+      <div class="card" style="border:1.5px solid var(--primary-light)">
+        <div class="card-title">
+          <span class="emoji">📊</span>运营报告
+        </div>
+        <div class="subtabs" id="reportTabs">
+          <div class="subtab active" onclick="switchReportRange('week')">📅 周报</div>
+          <div class="subtab" onclick="switchReportRange('month')">🗓️ 月报</div>
+          <div class="subtab" onclick="switchReportRange('year')">📆 年报</div>
+        </div>
+        <div id="reportContainer"></div>
       </div>
 
       <div class="card">
@@ -735,6 +770,100 @@ function delIdea(i){
   renderIdeas();
 }
 
+/* ==================== 语音输入功能 ==================== */
+var voiceRecognition = null;
+var voiceActive = false;
+
+function toggleVoice(){
+  if(voiceActive){
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice(){
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRec){
+    toast('你的浏览器不支持语音输入，试试Safari或Chrome');
+    return;
+  }
+
+  voiceRecognition = new SpeechRec();
+  voiceRecognition.lang = 'zh-CN';
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+
+  var inp = document.getElementById('ideaInput');
+  var status = document.getElementById('voiceStatus');
+  var btn = document.getElementById('voiceBtn');
+
+  voiceRecognition.onstart = function(){
+    voiceActive = true;
+    status.style.display = 'block';
+    btn.textContent = '⏹️ 停止';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-primary');
+    toast('开始语音输入，说话即可 🎤');
+  };
+
+  voiceRecognition.onresult = function(event){
+    var finalText = '';
+    var interimText = '';
+    for(var i = event.resultIndex; i < event.results.length; i++){
+      var transcript = event.results[i][0].transcript;
+      if(event.results[i].isFinal){
+        finalText += transcript;
+      } else {
+        interimText += transcript;
+      }
+    }
+    // 将识别结果追加到输入框
+    if(finalText){
+      var current = inp.value;
+      if(current && !current.endsWith('\n') && !current.endsWith(' ')){
+        current += ' ';
+      }
+      inp.value = current + finalText;
+      // 触发input事件以保存（如果有监听的话）
+    }
+    // 实时显示中间结果（不写入，只在状态栏预览）
+    if(interimText){
+      status.textContent = '🔴 录音中... ' + interimText;
+    }
+  };
+
+  voiceRecognition.onerror = function(event){
+    if(event.error === 'not-allowed'){
+      toast('请允许麦克风权限');
+    } else if(event.error === 'no-speech'){
+      // 没检测到语音，正常现象，不提示
+    } else {
+      toast('语音识别错误: ' + event.error);
+    }
+  };
+
+  voiceRecognition.onend = function(){
+    voiceActive = false;
+    status.style.display = 'none';
+    status.textContent = '🔴 录音中... 点击停止';
+    btn.textContent = '🎤 语音输入';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline');
+  };
+
+  try {
+    voiceRecognition.start();
+  } catch(e){
+    toast('启动语音失败，请重试');
+  }
+}
+
+function stopVoice(){
+  if(voiceRecognition){
+    voiceRecognition.stop();
+  }
+}
 /* ==================== 生活记录渲染 ==================== */
 var currentLifeDate = todayKey();
 
@@ -807,25 +936,311 @@ function saveLife(){
 
 /* ==================== 总览渲染 ==================== */
 function renderOverview(){
-  // 本周发布统计
-  var statuses = DB.get('topic_status', {});
-  var stats = { luxe:{done:0,total:0}, home:{done:0,total:0}, slow:{done:0,total:0} };
-  ACCOUNTS.forEach(function(acc){
-    stats[acc].total = TOPICS[acc].topics.length;
-  });
-  for(var key in statuses){
-    var parts = key.split('_');
-    var acc = parts[0];
-    if(stats[acc] && (statuses[key] === 'done' || statuses[key] === 'review')) stats[acc].done++;
+  renderReport();
+}
+
+/* ==================== 统计报告系统 ==================== */
+var currentReportRange = 'week';
+var ACC_NAMES = { luxe:'鹿溪风', home:'鹿住新家', slow:'鹿慢慢' };
+var ACC_COLORS = { luxe:'var(--accent)', home:'var(--blue)', slow:'var(--green)' };
+var ACC_EMOJI = { luxe:'🌸', home:'🏠', slow:'🌿' };
+
+function switchReportRange(range, evt){
+  currentReportRange = range;
+  document.querySelectorAll('#reportTabs .subtab').forEach(function(t){ t.classList.remove('active'); });
+  var e = evt || window.event;
+  if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
+  else { var tabs = document.querySelectorAll('#reportTabs .subtab'); var idx = ['week','month','year'].indexOf(range); if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active'); }
+  renderReport();
+}
+
+// 获取时间范围内的日期列表
+function getDateRange(range){
+  var now = new Date();
+  var dates = [];
+  var count = (range === 'week') ? 7 : (range === 'month') ? 30 : 365;
+  for(var i = count - 1; i >= 0; i--){
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    dates.push(key);
   }
-  var names = { luxe:'鹿溪风', home:'鹿住新家', slow:'鹿慢慢' };
+  return dates;
+}
+
+// 格式化日期范围标题
+function getRangeTitle(range){
+  var dates = getDateRange(range);
+  if(range === 'week'){
+    return dates[0].slice(5) + ' ~ ' + dates[dates.length-1].slice(5);
+  } else if(range === 'month'){
+    return '近30天 (' + dates[0].slice(5) + ' ~ ' + dates[dates.length-1].slice(5) + ')';
+  } else {
+    return '近365天 (' + dates[0] + ' ~ ' + dates[dates.length-1] + ')';
+  }
+}
+
+function renderReport(){
+  var range = currentReportRange;
+  var dates = getDateRange(range);
   var html = '';
+
+  html += '<div style="text-align:center;font-size:12px;color:var(--text-light);margin-bottom:14px">' + getRangeTitle(range) + '</div>';
+
+  // === 1. 发布完成率 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title">📱 内容发布完成率</div>';
+
+  var totalPublished = 0;
+  var totalPlanned = 0;
+  var barHtml = '<div class="bar-chart">';
+
   ACCOUNTS.forEach(function(acc){
-    var s = stats[acc];
-    var pct = s.total ? Math.round(s.done/s.total*100) : 0;
-    html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>'+names[acc]+'</span><span style="font-weight:600">'+s.done+'/'+s.total+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+    var published = 0;
+    var planned = 0;
+    dates.forEach(function(dateKey){
+      var plan = DB.get('plan_' + dateKey, null);
+      if(plan && plan.track){
+        if(plan.track[acc+'_dy'] === '✅') published++;
+        if(plan.track[acc+'_dy'] && plan.track[acc+'_dy'] !== '⬜') planned++;
+        if(plan.track[acc+'_xhs'] === '✅') published++;
+        if(plan.track[acc+'_xhs'] && plan.track[acc+'_xhs'] !== '⬜') planned++;
+      }
+    });
+    // planned至少等于published（有些可能没追踪但发了）
+    if(planned < published) planned = published;
+    totalPublished += published;
+    totalPlanned += planned;
+
+    var pct = planned > 0 ? Math.round(published/planned*100) : 0;
+    var barColor = ACC_COLORS[acc];
+    barHtml += '<div class="bar-row"><div class="bar-label">'+ACC_EMOJI[acc]+' '+ACC_NAMES[acc]+'</div>';
+    barHtml += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(pct,5)+'%;background:'+barColor+'">'+published+'/'+planned+'</div></div></div>';
   });
-  document.getElementById('weekStats').innerHTML = html;
+
+  // 按平台统计
+  var dyCount = 0, xhsCount = 0;
+  dates.forEach(function(dateKey){
+    var plan = DB.get('plan_' + dateKey, null);
+    if(plan && plan.track){
+      ACCOUNTS.forEach(function(acc){
+        if(plan.track[acc+'_dy'] === '✅') dyCount++;
+        if(plan.track[acc+'_xhs'] === '✅') xhsCount++;
+      });
+    }
+  });
+  barHtml += '<div class="bar-row"><div class="bar-label">🎬 抖音</div>';
+  barHtml += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(dyCount*10,5)+'%;background:var(--text-light)'; 
+  barHtml += ';min-width:30px">'+dyCount+'</div></div></div>';
+  barHtml += '<div class="bar-row"><div class="bar-label">📕 小红书</div>';
+  barHtml += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(xhsCount*10,5)+'%;background:var(--pink)'; 
+  barHtml += ';min-width:30px">'+xhsCount+'</div></div></div>';
+
+  barHtml += '</div>';
+  html += barHtml;
+
+  // 数字总览
+  html += '<div class="stat-grid" style="margin-top:12px">';
+  html += '<div class="stat-box green"><div class="stat-num">'+totalPublished+'</div><div class="stat-label">已发布条数</div></div>';
+  var avgPerDay = dates.length > 0 ? (totalPublished / dates.length).toFixed(1) : 0;
+  html += '<div class="stat-box blue"><div class="stat-num">'+avgPerDay+'</div><div class="stat-label">日均发布</div></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // === 2. 选题进度 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title">📚 选题进度</div>';
+
+  var statuses = DB.get('topic_status', {});
+  var statusCounts = { idea:0, script:0, shoot:0, done:0, review:0 };
+  var totalTopics = 0;
+
+  for(var key in statuses){
+    if(statusCounts.hasOwnProperty(statuses[key])) statusCounts[statuses[key]]++;
+    totalTopics++;
+  }
+  var allTopicCount = 0;
+  ACCOUNTS.forEach(function(acc){ allTopicCount += TOPICS[acc].topics.length; });
+
+  // 饼图风格的图例
+  var pieColors = { idea:'#ccc', script:'var(--blue)', shoot:'#E8A838', done:'var(--green)', review:'var(--pink)' };
+  var pieLabels = { idea:'💡构想', script:'📝脚本', shoot:'🎬拍摄', done:'✅已发', review:'📊复盘' };
+
+  // 按账号统计
+  html += '<div class="bar-chart">';
+  ACCOUNTS.forEach(function(acc){
+    var accDone = 0, accTotal = TOPICS[acc].topics.length;
+    for(var key in statuses){
+      if(key.indexOf(acc+'_') === 0 && (statuses[key] === 'done' || statuses[key] === 'review')) accDone++;
+    }
+    var pct = accTotal > 0 ? Math.round(accDone/accTotal*100) : 0;
+    html += '<div class="bar-row"><div class="bar-label">'+ACC_EMOJI[acc]+' '+ACC_NAMES[acc]+'</div>';
+    html += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(pct,3)+'%;background:'+ACC_COLORS[acc]+'">'+accDone+'/'+accTotal+'</div></div></div>';
+  });
+  html += '</div>';
+
+  // 状态分布
+  html += '<div class="pie-legend" style="margin-top:10px">';
+  html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:4px">选题状态分布（共'+totalTopics+'个已标记 / '+allTopicCount+'个总数）</div>';
+  var statusHtml = '';
+  for(var st in statusCounts){
+    if(statusCounts[st] > 0){
+      statusHtml += '<div class="pie-item"><div class="pie-dot" style="background:'+pieColors[st]+'"></div>'+pieLabels[st]+': '+statusCounts[st]+'个</div>';
+    }
+  }
+  if(statusHtml === '') statusHtml = '<div class="report-empty">还没有标记过选题状态</div>';
+  html += statusHtml;
+  html += '</div>';
+  html += '</div>';
+
+  // === 3. 每日待办完成率 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title">✅ 每日待办完成率</div>';
+
+  var totalTop3 = 0, doneTop3 = 0;
+  var totalTodos = 0, doneTodos = 0;
+  var activeDays = 0;
+
+  dates.forEach(function(dateKey){
+    var plan = DB.get('plan_' + dateKey, null);
+    if(plan){
+      var hasData = (plan.top3 && plan.top3.length > 0) || (plan.todos && plan.todos.length > 0);
+      if(hasData) activeDays++;
+      if(plan.top3){
+        plan.top3.forEach(function(t){ totalTop3++; if(t.done) doneTop3++; });
+      }
+      if(plan.todos){
+        plan.todos.forEach(function(t){ totalTodos++; if(t.done) doneTodos++; });
+      }
+    }
+  });
+
+  var allTotal = totalTop3 + totalTodos;
+  var allDone = doneTop3 + doneTodos;
+  var donePct = allTotal > 0 ? Math.round(allDone/allTotal*100) : 0;
+
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-box green"><div class="stat-num">'+allDone+'/'+allTotal+'</div><div class="stat-label">已完成/总待办</div></div>';
+  html += '<div class="stat-box accent"><div class="stat-num">'+donePct+'%</div><div class="stat-label">完成率</div></div>';
+  html += '</div>';
+
+  // 活跃天数
+  html += '<div class="stat-grid" style="margin-top:8px">';
+  html += '<div class="stat-box blue"><div class="stat-num">'+activeDays+'</div><div class="stat-label">活跃天数</div></div>';
+  html += '<div class="stat-box"><div class="stat-num">'+dates.length+'</div><div class="stat-label">统计天数</div></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // === 4. 灵感/生活活跃度 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title">💡 灵感 & 📖 生活活跃度</div>';
+
+  var ideas = DB.get('ideas', []);
+  var rangeIdeas = ideas.filter(function(idea){ return dates.indexOf(idea.date) !== -1; });
+
+  var lifeDays = 0;
+  dates.forEach(function(dateKey){
+    var life = DB.get('life_' + dateKey, null);
+    if(life && (life.event || life.feel)) lifeDays++;
+  });
+
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-box pink"><div class="stat-num">'+rangeIdeas.length+'</div><div class="stat-label">灵感条数</div></div>';
+  html += '<div class="stat-box green"><div class="stat-num">'+lifeDays+'</div><div class="stat-label">生活记录天数</div></div>';
+  html += '</div>';
+
+  // 灵感按账号分布
+  if(rangeIdeas.length > 0){
+    var ideaByAcc = { '鹿溪风':0, '鹿住新家':0, '鹿慢慢':0, '通用':0, '':0 };
+    rangeIdeas.forEach(function(idea){
+      var acc = idea.account || '通用';
+      if(!ideaByAcc.hasOwnProperty(acc)) ideaByAcc[acc] = 0;
+      ideaByAcc[acc]++;
+    });
+    html += '<div class="bar-chart" style="margin-top:8px">';
+    for(var a in ideaByAcc){
+      if(ideaByAcc[a] > 0){
+        html += '<div class="bar-row"><div class="bar-label">'+a+'</div>';
+        html += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(ideaByAcc[a]*15,5)+'%;background:var(--pink)">'+ideaByAcc[a]+'</div></div></div>';
+      }
+    }
+    html += '</div>';
+  }
+
+  // 最近的灵感预览
+  if(rangeIdeas.length > 0){
+    html += '<div style="margin-top:10px;font-size:12px;color:var(--text-light)">最近灵感：</div>';
+    rangeIdeas.slice(-3).reverse().forEach(function(idea){
+      html += '<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:#bbb">'+idea.date.slice(5)+'</span> '+esc(idea.content.slice(0,30))+'</div>';
+    });
+  }
+  html += '</div>';
+
+  // === 5. 自动文字总结 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title">📝 自动总结</div>';
+  html += '<div class="report-summary">';
+
+  var rangeLabel = range === 'week' ? '本周' : (range === 'month' ? '本月' : '本年');
+  var summary = '';
+
+  // 发布总结
+  if(totalPublished > 0){
+    summary += '📌 '+rangeLabel+'共发布 <b>'+totalPublished+'</b> 条内容（抖音'+dyCount+'条，小红书'+xhsCount+'条），日均 <b>'+avgPerDay+'</b> 条。';
+    var bestAcc = '', bestCount = 0;
+    ACCOUNTS.forEach(function(acc){
+      var count = 0;
+      dates.forEach(function(dateKey){
+        var plan = DB.get('plan_' + dateKey, null);
+        if(plan && plan.track){
+          if(plan.track[acc+'_dy'] === '✅') count++;
+          if(plan.track[acc+'_xhs'] === '✅') count++;
+        }
+      });
+      if(count > bestCount){ bestCount = count; bestAcc = acc; }
+    });
+    if(bestCount > 0) summary += '发布最多的是 <b>'+ACC_NAMES[bestAcc]+'</b>（'+bestCount+'条）。';
+  } else {
+    summary += '📌 '+rangeLabel+'还没有发布记录，记得在「计划」页追踪发布状态。';
+  }
+  summary += '<br>';
+
+  // 选题总结
+  var reviewedCount = statusCounts.review;
+  var doneCount = statusCounts.done;
+  if(totalTopics > 0){
+    summary += '📚 选题库已标记 <b>'+totalTopics+'</b> 个，其中已发布 <b>'+(doneCount+reviewedCount)+'</b> 个';
+    if(reviewedCount > 0) summary += '，已复盘 <b>'+reviewedCount+'</b> 个';
+    summary += '。';
+  } else {
+    summary += '📚 选题库还没有标记过状态，去「选题」页点击选题试试。';
+  }
+  summary += '<br>';
+
+  // 待办总结
+  if(allTotal > 0){
+    summary += '✅ '+rangeLabel+'共记录 <b>'+allTotal+'</b> 个待办，完成 <b>'+allDone+'</b> 个，完成率 <b>'+donePct+'%</b>';
+    if(activeDays > 0) summary += '，活跃 <b>'+activeDays+'</b> 天';
+    summary += '。';
+  } else {
+    summary += '✅ '+rangeLabel+'还没有记录待办，每天早上记得填「三件最重要的事」。';
+  }
+  summary += '<br>';
+
+  // 灵感生活总结
+  if(rangeIdeas.length > 0 || lifeDays > 0){
+    summary += '💡 记录了 <b>'+rangeIdeas.length+'</b> 条灵感，<b>'+lifeDays+'</b> 天生活日记。';
+    if(rangeIdeas.length >= 10) summary += '灵感很丰富，继续保持！';
+    else if(rangeIdeas.length < 3) summary += '灵感偏少，想到什么随手记下来。';
+  } else {
+    summary += '💡 '+rangeLabel+'还没有记录灵感和生活，试着随手记一点。';
+  }
+
+  html += summary;
+  html += '</div>';
+  html += '</div>';
+
+  document.getElementById('reportContainer').innerHTML = html;
 }
 
 /* ==================== 每日选题推荐系统 ==================== */
