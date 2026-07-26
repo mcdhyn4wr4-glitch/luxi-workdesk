@@ -272,14 +272,32 @@ button{cursor:pointer}
         <div style="font-size:13px;color:var(--text-light)" id="planDateLong"></div>
       </div>
 
-      <!-- 每日推荐选题 -->
-      <div class="card" id="dailyCard" style="border:1.5px solid var(--primary-light)">
+      <!-- 今日工作流：晨间整理 + 晚间复盘 -->
+      <div class="card" id="workflowCard" style="border:1.5px solid var(--primary-light);background:linear-gradient(180deg,#fbfaf7,#fff)">
         <div class="card-title">
-          <span class="emoji">🌟</span>今日选题推荐
-          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:400" id="dayLabel"></span>
+          <span class="emoji">⏰</span>今日工作流
+          <span id="workflowPhase" style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:6px;background:var(--primary-bg);color:var(--primary);font-weight:500">晨间</span>
         </div>
-        <div id="dailyRecommend"></div>
-        <div style="margin-top:10px;font-size:11px;color:#bbb;text-align:center">每天 3 个账号各推 1 个 · 点击选题跳转到选题库</div>
+        <div id="workflowMorning">
+          <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px">🌅 晨间 15min · 快速整理今天</div>
+          <div id="morningChecklist"></div>
+          <div style="margin-top:10px;display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics',window.event)">🌟 看今日选题</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="scrollToCard('top3Card')">🎯 填三件事</button>
+          </div>
+        </div>
+        <div id="workflowEvening" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px">🌙 晚间 10min · 复盘今天</div>
+          <div id="eveningChecklist"></div>
+          <div style="margin-top:10px;display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">📖 写生活记录</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('idea',window.event)">💡 补灵感</button>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:5px 8px" id="phaseToggleBtn" onclick="toggleWorkflowPhase()">🌙 切到晚间复盘</button>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:#bbb;text-align:center">周日 30min：三账号复盘 → 调整下周选题</div>
       </div>
 
       <!-- 本周全部推荐 -->
@@ -296,7 +314,7 @@ button{cursor:pointer}
         <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">📅 查看本周全部推荐</button>
       </div>
 
-      <div class="card">
+      <div class="card" id="top3Card">
         <div class="card-title"><span class="emoji">🎯</span>今日三件最重要的事</div>
         <div id="top3List"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
@@ -332,6 +350,16 @@ button{cursor:pointer}
 
     <!-- ===== 页面1: 选题库 ===== -->
     <div class="page" id="page-topics">
+      <!-- 今日选题推荐（三账号） -->
+      <div class="card" id="dailyCard" style="border:1.5px solid var(--primary-light)">
+        <div class="card-title">
+          <span class="emoji">🌟</span>今日选题推荐
+          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:400" id="dayLabel"></span>
+        </div>
+        <div id="dailyRecommend"></div>
+        <div style="margin-top:10px;font-size:11px;color:#bbb;text-align:center">每天 3 个账号各推 5 个 · 点击标记要做的 · ❌不要的会永久移除</div>
+      </div>
+
       <div class="subtabs">
         <div class="subtab active" onclick="switchAccount('luxe')">🌸 鹿溪风</div>
         <div class="subtab" onclick="switchAccount('home')">🏠 鹿住新家</div>
@@ -433,12 +461,13 @@ button{cursor:pointer}
 
       <div class="card">
         <div class="card-title"><span class="emoji">⏰</span>每日工作流</div>
-        <div style="font-size:13px;line-height:1.8">
-          <b>晨间 15min</b><br><span style="color:var(--text-light)">填今日计划 → 看昨日数据 → 灵感丢灵感箱</span><br>
-          <b style="margin-top:8px;display:block">创作时段</b><br><span style="color:var(--text-light)">集中拍摄，一次拍多条，碎片随手拍</span><br>
-          <b style="margin-top:8px;display:block">晚间 10min</b><br><span style="color:var(--text-light)">发布内容 → 写生活记录 → 灵感继续记录</span><br>
-          <b style="margin-top:8px;display:block">周日 30min</b><br><span style="color:var(--text-light)">三账号复盘 → 调整下周选题</span>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-light)">
+          <b style="color:var(--text)">晨间 15min</b>：填计划 → 看选题 → 灵感入箱<br>
+          <b style="color:var(--text)">创作时段</b>：集中拍摄，一次拍多条<br>
+          <b style="color:var(--text)">晚间 10min</b>：发布 → 生活记录 → 补灵感<br>
+          <b style="color:var(--text)">周日 30min</b>：三账号复盘 → 调下周选题
         </div>
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;font-size:12px" onclick="switchPage('plan',window.event)">📋 去计划页执行工作流</button>
       </div>
 
       <div class="card">
@@ -451,14 +480,14 @@ button{cursor:pointer}
           </div>
         </div>
         <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;line-height:1.5">
-          上传数据到云端后，其他设备打开工作台点「从云端拉取」即可同步。<br>
-          建议：每次改完数据点一下「上传」，换设备前点一下「拉取」。
+          开启「实时同步」后，每次改动数据会自动上传到云端，其他设备点「从云端拉取」即可同步。<br>
+          建议：换设备前点一下「拉取」获取最新数据。
         </div>
         <div id="syncStatus" style="font-size:12px;color:var(--text-light);margin-bottom:8px"></div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-primary btn-block" onclick="syncUpload()">☁️ 上传数据到云端</button>
           <button class="btn btn-outline btn-block" onclick="syncDownload()">📥 从云端拉取数据</button>
-          <button class="btn btn-outline btn-block" onclick="autoSyncToggle()" id="autoSyncBtn">⏱️ 自动同步：关闭</button>
+          <button class="btn btn-outline btn-block" onclick="autoSyncToggle()" id="autoSyncBtn">⚡ 实时同步：关闭</button>
         </div>
       </div>
 
@@ -650,8 +679,8 @@ function switchPage(name, evt){
   var titles = { plan:'今日计划', topics:'选题库', idea:'灵感记录', life:'生活记录', overview:'总览' };
   document.getElementById('pageTitle').textContent = titles[name];
   document.getElementById('content').scrollTop = 0;
-  if(name==='plan'){ renderDaily(); renderPlan(); }
-  if(name==='topics') renderTopics();
+  if(name==='plan'){ renderWorkflow(); renderPlan(); }
+  if(name==='topics'){ renderDaily(); renderTopics(); }
   if(name==='idea') renderIdeas();
   if(name==='life') renderLife();
   if(name==='overview') renderOverview();
@@ -680,6 +709,81 @@ function formatDate(){
   var d = new Date();
   var days = ['日','一','二','三','四','五','六'];
   return d.getMonth()+1+'月'+d.getDate()+'日 周'+days[d.getDay()];
+}
+
+/* ==================== 今日工作流 ==================== */
+var workflowPhase = 'morning'; // morning / evening
+var MORNING_STEPS = [
+  { key:'look', text:'看一眼今日选题推荐', hint:'选题页顶部' },
+  { key:'top3', text:'填今日三件最重要的事', hint:'往下滚一点' },
+  { key:'track', text:'确认今天要发哪些平台', hint:'发布追踪表' },
+  { key:'idea', text:'灵感丢灵感箱', hint:'想到就记' }
+];
+var EVENING_STEPS = [
+  { key:'publish', text:'发布今天的内容', hint:'抖音+小红书' },
+  { key:'track', text:'更新发布追踪状态', hint:'打勾已发' },
+  { key:'life', text:'写生活记录', hint:'心情+小记' },
+  { key:'data', text:'记今日数据', hint:'数据速记' }
+];
+
+function getWorkflow(){ return DB.get('workflow_'+todayKey(), { morning:{}, evening:{} }); }
+function saveWorkflow(w){ DB.set('workflow_'+todayKey(), w); }
+
+function renderWorkflow(){
+  var w = getWorkflow();
+  var phase = workflowPhase;
+  var steps = phase === 'morning' ? MORNING_STEPS : EVENING_STEPS;
+  var done = w[phase] || {};
+
+  var html = '';
+  steps.forEach(function(s){
+    var isDone = !!done[s.key];
+    html += '<div class="todo-item" onclick="toggleWorkflowStep(\''+s.key+'\')">'+
+      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'✓':'')+'</div>'+
+      '<div style="flex:1"><div class="todo-text '+(isDone?'done':'')+'">'+s.text+'</div>'+
+      '<div style="font-size:11px;color:var(--text-light);margin-top:1px">'+s.hint+'</div></div></div>';
+  });
+  var container = document.getElementById(phase === 'morning' ? 'morningChecklist' : 'eveningChecklist');
+  if(container) container.innerHTML = html;
+}
+
+function toggleWorkflowStep(key){
+  var w = getWorkflow();
+  if(!w[workflowPhase]) w[workflowPhase] = {};
+  w[workflowPhase][key] = !w[workflowPhase][key];
+  saveWorkflow(w);
+  renderWorkflow();
+  // 数据变更，触发实时同步
+  scheduleRealtimeSync();
+}
+
+function toggleWorkflowPhase(){
+  workflowPhase = (workflowPhase === 'morning') ? 'evening' : 'morning';
+  document.getElementById('workflowMorning').style.display = workflowPhase === 'morning' ? 'block' : 'none';
+  document.getElementById('workflowEvening').style.display = workflowPhase === 'evening' ? 'block' : 'none';
+  var phaseLabel = document.getElementById('workflowPhase');
+  var toggleBtn = document.getElementById('phaseToggleBtn');
+  if(workflowPhase === 'morning'){
+    phaseLabel.textContent = '晨间';
+    phaseLabel.style.background = 'var(--primary-bg)';
+    phaseLabel.style.color = 'var(--primary)';
+    toggleBtn.textContent = '🌙 切到晚间复盘';
+  } else {
+    phaseLabel.textContent = '晚间';
+    phaseLabel.style.background = '#FDF0EC';
+    phaseLabel.style.color = 'var(--accent)';
+    toggleBtn.textContent = '🌅 切回晨间整理';
+  }
+  renderWorkflow();
+}
+
+function scrollToCard(id){
+  var el = document.getElementById(id);
+  if(el){
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    el.style.borderColor = 'var(--primary)';
+    setTimeout(function(){ el.style.borderColor = ''; }, 1800);
+  }
 }
 
 /* ==================== 每日计划渲染 ==================== */
@@ -746,19 +850,19 @@ function esc(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function getPlan(){ var key = todayKey(); var p = DB.get('plan_'+key, { top3:[], todos:[], track:{}, data:{}, note:'' }); return p; }
 function savePlan(p){ DB.set('plan_'+todayKey(), p); }
 
-function addTop3(){ var inp = document.getElementById('top3Input'); if(!inp.value.trim()) return; var p = getPlan(); p.top3.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); }
-function toggleTop3(i){ var p = getPlan(); p.top3[i].done = !p.top3[i].done; savePlan(p); renderPlan(); }
-function delTop3(i){ var p = getPlan(); p.top3.splice(i,1); savePlan(p); renderPlan(); }
+function addTop3(){ var inp = document.getElementById('top3Input'); if(!inp.value.trim()) return; var p = getPlan(); p.top3.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); scheduleRealtimeSync(); }
+function toggleTop3(i){ var p = getPlan(); p.top3[i].done = !p.top3[i].done; savePlan(p); renderPlan(); scheduleRealtimeSync(); }
+function delTop3(i){ var p = getPlan(); p.top3.splice(i,1); savePlan(p); renderPlan(); scheduleRealtimeSync(); }
 
-function addTodo(){ var inp = document.getElementById('todoInput'); if(!inp.value.trim()) return; var p = getPlan(); p.todos.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); }
-function toggleTodo(i){ var p = getPlan(); p.todos[i].done = !p.todos[i].done; savePlan(p); renderPlan(); }
-function delTodo(i){ var p = getPlan(); p.todos.splice(i,1); savePlan(p); renderPlan(); }
+function addTodo(){ var inp = document.getElementById('todoInput'); if(!inp.value.trim()) return; var p = getPlan(); p.todos.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); scheduleRealtimeSync(); }
+function toggleTodo(i){ var p = getPlan(); p.todos[i].done = !p.todos[i].done; savePlan(p); renderPlan(); scheduleRealtimeSync(); }
+function delTodo(i){ var p = getPlan(); p.todos.splice(i,1); savePlan(p); renderPlan(); scheduleRealtimeSync(); }
 
-function setTrack(acc, plat, val){ var p = getPlan(); p.track[acc+'_'+plat] = val; savePlan(p); }
-function setData(acc, plat, val){ var p = getPlan(); p.data[acc+'_'+plat] = val; savePlan(p); }
+function setTrack(acc, plat, val){ var p = getPlan(); p.track[acc+'_'+plat] = val; savePlan(p); scheduleRealtimeSync(); }
+function setData(acc, plat, val){ var p = getPlan(); p.data[acc+'_'+plat] = val; savePlan(p); scheduleRealtimeSync(); }
 
 // 小记自动保存
-document.addEventListener('input', function(e){ if(e.target.id === 'dailyNote'){ var p = getPlan(); p.note = e.target.value; savePlan(p); } });
+document.addEventListener('input', function(e){ if(e.target.id === 'dailyNote'){ var p = getPlan(); p.note = e.target.value; savePlan(p); scheduleRealtimeSync(); } });
 
 /* ==================== 选题库渲染 ==================== */
 function renderTopics(){
@@ -807,6 +911,7 @@ function cycleStatus(key){
   DB.set('topic_status', statuses);
   renderTopics();
   toast('状态 → ' + STATUS_LIST[idx].label);
+  scheduleRealtimeSync();
 }
 
 /* ==================== 灵感记录渲染 ==================== */
@@ -840,6 +945,7 @@ function addIdea(){
   document.getElementById('ideaAccount').value = '';
   renderIdeas();
   toast('灵感已记录 💡');
+  scheduleRealtimeSync();
 }
 
 function delIdea(i){
@@ -847,6 +953,7 @@ function delIdea(i){
   ideas.splice(i, 1);
   DB.set('ideas', ideas);
   renderIdeas();
+  scheduleRealtimeSync();
 }
 
 /* ==================== 语音输入功能 ==================== */
@@ -996,6 +1103,7 @@ document.addEventListener('click', function(e){
     entry.mood = entry.mood === m ? '' : m;
     DB.set('life_'+currentLifeDate, entry);
     renderLife();
+    scheduleRealtimeSync();
   }
 });
 
@@ -1006,6 +1114,7 @@ document.addEventListener('input', function(e){
     entry.feel = document.getElementById('lifeFeel').value;
     entry.gratitude = document.getElementById('lifeGratitude').value;
     DB.set('life_'+currentLifeDate, entry);
+    scheduleRealtimeSync();
   }
 });
 
@@ -1484,6 +1593,7 @@ function selectDailyTopic(acc, idx){
   }
   DB.set('daily_rec', rec);
   renderDaily();
+  scheduleRealtimeSync();
 }
 
 // 标记选题为「不要」——永久加入黑名单，不再推荐
@@ -1516,6 +1626,7 @@ function rejectTopic(acc, idx, evt){
   DB.set('daily_rec', rec);
   renderDaily();
   toast('已移除，不再推荐这个选题 ❌');
+  scheduleRealtimeSync();
 }
 
 // 换一批候选（重新生成今天的候选，排除当前已选定的）
@@ -1545,6 +1656,7 @@ function refreshDailyCandidates(acc){
   DB.set('daily_rec', rec);
   renderDaily();
   toast('已换一批候选 🔄');
+  scheduleRealtimeSync();
 }
 
 // 生成本周推荐池（3个账号各3个，不重复每日推荐）
@@ -1694,6 +1806,7 @@ function toggleHomeStage(){
   renderWeekly();
 
   toast('装修进度切换为：' + STAGE_NAMES[HOME_STAGE] + ' 🏠');
+  scheduleRealtimeSync();
 }
 
 // 跳转到选题库对应选题
@@ -1775,6 +1888,27 @@ var GITHUB_REPO = 'luxi-workdesk';
 var GITHUB_FILE = 'data.json';
 var SYNC_API = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_FILE;
 var autoSyncTimer = null;
+var realtimeSyncEnabled = false;
+var realtimeSyncTimer = null;
+var lastSyncTime = 0;
+
+// 实时同步：数据变更后防抖 3 秒上传一次
+function scheduleRealtimeSync(){
+  if(!realtimeSyncEnabled) return;
+  if(!getGHToken()) return;
+  if(realtimeSyncTimer) clearTimeout(realtimeSyncTimer);
+  setSyncStatus('📝 数据已变更，准备实时同步...', 'var(--blue)');
+  realtimeSyncTimer = setTimeout(function(){
+    realtimeSyncTimer = null;
+    var now = Date.now();
+    // 距离上次同步至少 5 秒，避免连续请求
+    if(now - lastSyncTime < 5000){
+      scheduleRealtimeSync();
+      return;
+    }
+    syncUpload(true);
+  }, 3000);
+}
 
 function getGHToken(){
   return DB.get('gh_token', '');
@@ -1834,14 +1968,14 @@ function setSyncStatus(msg, color){
   if(el){ el.textContent = msg; el.style.color = color || 'var(--text-light)'; }
 }
 
-function syncUpload(){
-  if(!checkTokenExists()){ toast('请先输入GitHub Token'); return; }
+function syncUpload(silent){
+  if(!checkTokenExists()){ if(!silent) toast('请先输入GitHub Token'); return; }
   var data = getAllLocalData();
   if(Object.keys(data).length === 0){
-    toast('没有数据可上传');
+    if(!silent) toast('没有数据可上传');
     return;
   }
-  setSyncStatus('正在上传...', 'var(--blue)');
+  if(!silent) setSyncStatus('正在上传...', 'var(--blue)');
   var content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
 
   // 先获取当前文件的sha（如果存在）
@@ -1865,16 +1999,17 @@ function syncUpload(){
     });
   }).then(function(r){ return r.json(); }).then(function(result){
     if(result && result.content){
+      lastSyncTime = Date.now();
       var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-      setSyncStatus('✅ 已上传 · ' + time, 'var(--green)');
-      toast('数据已上传到云端 ☁️');
+      setSyncStatus('✅ 已同步 · ' + time + (realtimeSyncEnabled ? ' · 实时同步中' : ''), 'var(--green)');
+      if(!silent) toast('数据已上传到云端 ☁️');
     } else {
       setSyncStatus('❌ 上传失败: ' + (result.message || '未知错误'), '#d66');
-      toast('上传失败: ' + (result.message || ''));
+      if(!silent) toast('上传失败: ' + (result.message || ''));
     }
   }).catch(function(err){
     setSyncStatus('❌ 网络错误: ' + err.message, '#d66');
-    toast('网络错误: ' + err.message);
+    if(!silent) toast('网络错误: ' + err.message);
   });
 }
 
@@ -1906,21 +2041,26 @@ function syncDownload(){
 
 function autoSyncToggle(){
   var btn = document.getElementById('autoSyncBtn');
-  if(autoSyncTimer){
-    clearInterval(autoSyncTimer);
-    autoSyncTimer = null;
-    btn.textContent = '⏱️ 自动同步：关闭';
+  if(realtimeSyncEnabled){
+    // 关闭实时同步
+    realtimeSyncEnabled = false;
+    if(realtimeSyncTimer){ clearTimeout(realtimeSyncTimer); realtimeSyncTimer = null; }
+    btn.textContent = '⚡ 实时同步：关闭';
     btn.classList.remove('btn-primary');
     btn.classList.add('btn-outline');
-    toast('自动同步已关闭');
+    setSyncStatus('实时同步已关闭，可手动上传/拉取', 'var(--text-light)');
+    toast('实时同步已关闭');
   } else {
-    // 开启自动同步：每5分钟上传一次
-    syncUpload(); // 立即上传一次
-    autoSyncTimer = setInterval(function(){ syncUpload(); }, 5 * 60 * 1000);
-    btn.textContent = '⏱️ 自动同步：开启（5分钟）';
+    // 开启实时同步：数据变更后自动上传
+    if(!getGHToken()){ toast('请先输入 GitHub Token'); return; }
+    realtimeSyncEnabled = true;
+    btn.textContent = '⚡ 实时同步：开启';
     btn.classList.remove('btn-outline');
     btn.classList.add('btn-primary');
-    toast('自动同步已开启');
+    toast('实时同步已开启，数据变更自动上传');
+    // 立即上传一次
+    syncUpload(true);
+    setSyncStatus('⚡ 实时同步已开启 · 数据变更自动上传', 'var(--green)');
   }
 }
 
@@ -1945,6 +2085,7 @@ function checkSyncStatus(){
 
 /* ==================== 初始化 ==================== */
 document.getElementById('topDate').textContent = formatDate();
+renderWorkflow();
 renderDaily();
 renderPlan();
 renderTopics();
