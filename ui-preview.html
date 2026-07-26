@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鹿系工作台 · UI 预览</title>
+<style>
+/* ==================== 设计令牌 ==================== */
+:root{
+  /* 主色系：暖棕灰 */
+  --primary-900:#4A3F35; --primary-800:#5C5044; --primary-700:#6E6255;
+  --primary:#7B6B5E; --primary-500:#8A7C6F; --primary-400:#A89B8E;
+  --primary-300:#C0B4A8; --primary-200:#D4CBBF; --primary-100:#E8E0D4;
+  --primary-50:#F0EBE3; --primary-bg:#F0EBE3;
+  /* 强调色：橘红 */
+  --accent-900:#8B4A35; --accent-700:#A85E45; --accent:#C97B5E;
+  --accent-300:#E0A48A; --accent-100:#FDF0EC;
+  /* 语义色 */
+  --green-700:#4A7A5E; --green:#6B9B7E; --green-300:#92BDA5; --green-100:#EAF3EE;
+  --pink-700:#B06A60; --pink:#D4847A; --pink-300:#E8A89E; --pink-100:#F5EDF2;
+  --blue-700:#5A8098; --blue:#7B9EB5; --blue-300:#A0BCCD; --blue-100:#EBF1F5;
+  --amber:#E8A838; --amber-100:#FBF0DA;
+  /* 中性 */
+  --bg:#F5F3F0; --bg-elevated:#FFFFFF; --bg-subtle:#ECEAE6;
+  --card:#FFFFFF; --card-hover:#F9F7F4;
+  --text:#2C2C2C; --text-mid:#6A6A6A; --text-light:#9A9A9A; --text-muted:#C5C5C5;
+  --border:#E8E4DE; --border-light:#F0EDE8; --border-focus:#A89B8E;
+  --surface-tint:rgba(123,107,94,0.04);
+  /* 间距 */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-7:28px; --space-8:32px;
+  --space-10:40px; --space-12:48px; --space-16:64px;
+  /* 圆角 */
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:18px;
+  --radius-2xl:24px; --radius-full:9999px;
+  /* 阴影 */
+  --shadow-sm:0 1px 2px rgba(44,44,44,0.04);
+  --shadow-md:0 2px 8px rgba(44,44,44,0.06);
+  --shadow-lg:0 4px 16px rgba(44,44,44,0.08);
+  --shadow-xl:0 8px 32px rgba(44,44,44,0.12);
+  --shadow-inner:inset 0 1px 3px rgba(44,44,44,0.06);
+  --shadow-focus:0 0 0 3px rgba(123,107,94,0.15);
+  --shadow-card:0 1px 3px rgba(44,44,44,0.04),0 1px 2px rgba(44,44,44,0.02);
+  /* 侧边栏 */
+  --sidebar-w:64px; --sidebar-w-wide:160px;
+  /* 动画 */
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --duration-fast:150ms; --duration-normal:250ms; --duration-slow:400ms;
+  --fw-regular:400; --fw-medium:500; --fw-semibold:600; --fw-bold:700;
+}
+
+/* 暗色模式 */
+[data-theme="dark"]{
+  --primary-900:#3D3329; --primary-800:#4A3F35; --primary-700:#5C5044;
+  --primary:#A89B8E; --primary-500:#C0B4A8; --primary-400:#D4CBBF;
+  --primary-300:#E0D8CC; --primary-200:#E8E0D4; --primary-100:#2C2620;
+  --primary-50:#221C17; --primary-bg:#2C2620;
+  --accent-900:#6B3D2B; --accent-700:#8B4A35; --accent:#E0A48A;
+  --accent-300:#C97B5E; --accent-100:#3A2A22;
+  --green-700:#6B9B7E; --green:#92BDA5; --green-300:#B0D4BC; --green-100:#1E2E24;
+  --pink-700:#D4847A; --pink:#E8A89E; --pink-300:#F0C0B6; --pink-100:#2E2220;
+  --blue-700:#7B9EB5; --blue:#A0BCCD; --blue-300:#C0D4E0; --blue-100:#1E2A34;
+  --amber:#F0B848; --amber-100:#2A2418;
+  --bg:#1A1614; --bg-elevated:#221C17; --bg-subtle:#2C2620;
+  --card:#262019; --card-hover:#302921;
+  --text:#E8E0D4; --text-mid:#B0A898; --text-light:#8A8070; --text-muted:#5A5448;
+  --border:#3A3428; --border-light:#2C2620; --border-focus:#A89B8E;
+  --surface-tint:rgba(168,155,142,0.06);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.16);
+  --shadow-md:0 2px 8px rgba(0,0,0,0.20);
+  --shadow-lg:0 4px 16px rgba(0,0,0,0.28);
+  --shadow-xl:0 8px 32px rgba(0,0,0,0.36);
+  --shadow-inner:inset 0 1px 3px rgba(0,0,0,0.20);
+  --shadow-focus:0 0 0 3px rgba(168,155,142,0.25);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* ==================== 全局重置 ==================== */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{transition:background-color var(--duration-slow) var(--ease-out)}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:15px;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;transition:color var(--duration-slow) var(--ease-out),background var(--duration-slow) var(--ease-out)}
+input,textarea,select,button{font-family:inherit;font-size:inherit;color:inherit;border:none;outline:none;background:none}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary-400);outline-offset:2px}
+
+/* ==================== 布局 ==================== */
+#app{display:flex;height:100dvh;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
+
+/* === 侧边栏 === */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border-light);display:flex;flex-direction:column;
+  align-items:center;padding:calc(env(safe-area-inset-top) + var(--space-4)) var(--space-2) calc(env(safe-area-inset-bottom) + var(--space-4));
+  z-index:10;box-shadow:var(--shadow-sm);
+}
+.sidebar-logo{
+  width:40px;height:40px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--primary),var(--primary-700));
+  display:flex;align-items:center;justify-content:center;
+  color:var(--card);font-size:18px;font-weight:700;margin-bottom:var(--space-6);
+  box-shadow:var(--shadow-md);transition:transform var(--duration-normal) var(--ease-spring);
+}
+.sidebar-logo:active{transform:scale(0.92)}
+.sidebar-nav{display:flex;flex-direction:column;gap:var(--space-2);width:100%;align-items:center;flex:1}
+.nav-item{
+  width:48px;height:48px;border-radius:var(--radius-lg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  color:var(--text-light);transition:all var(--duration-normal) var(--ease-out);position:relative;cursor:pointer;
+}
+.nav-item .nav-icon{font-size:20px;line-height:1}
+.nav-item .nav-label{font-size:10px;letter-spacing:0.5px;font-weight:var(--fw-medium)}
+.nav-item:hover{background:var(--surface-tint);color:var(--text-mid)}
+.nav-item.active{color:var(--primary);background:var(--primary-bg);box-shadow:var(--shadow-sm)}
+.nav-item.active::before{
+  content:'';position:absolute;left:-4px;top:50%;transform:translateY(-50%);
+  width:4px;height:20px;background:var(--primary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  transition:height var(--duration-normal) var(--ease-spring);
+}
+.nav-item:active{transform:scale(0.95);background:var(--primary-bg)}
+.sidebar-footer{
+  width:100%;display:flex;flex-direction:column;gap:var(--space-2);
+  align-items:center;padding-top:var(--space-4);border-top:1px solid var(--border-light);margin-top:var(--space-3);
+}
+
+/* === 主区域 === */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* 顶部栏 */
+.topbar{
+  padding:calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) var(--space-3);
+  flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;
+  background:var(--card);border-bottom:1px solid var(--border-light);
+}
+.topbar-left{display:flex;flex-direction:column;gap:var(--space-1)}
+.topbar h1{font-size:20px;font-weight:var(--fw-bold);letter-spacing:0.3px;color:var(--text)}
+.topbar-progress{display:flex;align-items:center;gap:var(--space-2);font-size:11px;color:var(--text-light)}
+.topbar-progress-bar{width:80px;height:4px;background:var(--border);border-radius:var(--radius-full);overflow:hidden}
+.topbar-progress-fill{height:100%;background:linear-gradient(90deg,var(--green-700),var(--green));border-radius:var(--radius-full);transition:width var(--duration-slow) var(--ease-out)}
+.topbar-right{display:flex;align-items:center;gap:var(--space-2)}
+.topbar .top-date{font-size:12px;color:var(--text-light);font-weight:var(--fw-regular)}
+.topbar-dark-btn{
+  width:32px;height:32px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;
+  transition:all var(--duration-fast) var(--ease-out);
+}
+.topbar-dark-btn:hover{background:var(--surface-tint)}
+.topbar-dark-btn:active{transform:scale(0.92)}
+
+/* 内容区 */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--space-2) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-6));background:var(--bg)}
+
+/* 页面 */
+.page{display:none !important;animation:fadeIn var(--duration-slow) var(--ease-out)}
+.page.active{display:block !important}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardEnter{from{opacity:0;transform:translateY(16px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes checkPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes ideaEnter{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes numPop{0%{transform:scale(0.8);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes emptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* ==================== 通用组件 ==================== */
+/* 卡片 */
+.card{
+  background:var(--card);border-radius:var(--radius-xl);
+  padding:var(--space-5) var(--space-4);margin-bottom:var(--space-3);
+  border:1px solid var(--border-light);box-shadow:var(--shadow-card);
+  transition:all var(--duration-normal) var(--ease-out);
+  animation:cardEnter var(--duration-slow) var(--ease-out);
+}
+.card:hover{box-shadow:var(--shadow-md);border-color:var(--border)}
+.card-title{
+  font-size:14px;font-weight:var(--fw-semibold);margin-bottom:var(--space-4);
+  color:var(--text);display:flex;align-items:center;gap:var(--space-2);letter-spacing:0.2px;
+}
+.card-title .emoji{font-size:16px}
+/* 主卡片 */
+.card-primary{
+  border:1.5px solid var(--primary-300);
+  background:linear-gradient(180deg,var(--primary-50),var(--card));
+  box-shadow:var(--shadow-md);
+}
+.card-primary:hover{box-shadow:var(--shadow-lg)}
+/* 强调卡片 */
+.card-highlight{
+  border:2px solid var(--accent-300);
+  background:linear-gradient(180deg,var(--accent-100),var(--card));
+  box-shadow:var(--shadow-lg);position:relative;
+}
+.card-highlight:hover{box-shadow:var(--shadow-xl)}
+
+.section-label{
+  font-size:11px;color:var(--text-light);margin:var(--space-5) 0 var(--space-3);
+  font-weight:var(--fw-semibold);letter-spacing:1px;text-transform:uppercase;
+}
+
+/* 输入框 */
+.input,.textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:var(--space-3);font-size:14px;
+  transition:all var(--duration-normal) var(--ease-out);box-shadow:var(--shadow-inner);
+}
+.input:focus,.textarea:focus{border-color:var(--border-focus);background:var(--card);box-shadow:var(--shadow-focus)}
+.textarea{resize:none;min-height:60px;line-height:1.6}
+.input::placeholder,.textarea::placeholder{color:var(--text-muted)}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--space-1);
+  padding:var(--space-3) var(--space-5);border-radius:var(--radius-md);
+  font-size:14px;font-weight:var(--fw-medium);transition:all var(--duration-fast) var(--ease-out);
+  position:relative;overflow:hidden;
+}
+.btn-primary{background:var(--primary);color:var(--card);box-shadow:var(--shadow-sm)}
+.btn-primary:hover{background:var(--primary-700);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0) scale(0.97);box-shadow:var(--shadow-sm)}
+.btn-secondary{border:1px solid var(--border);color:var(--text-mid);background:var(--card)}
+.btn-secondary:hover{border-color:var(--primary-400);color:var(--text);background:var(--primary-50)}
+.btn-secondary:active{background:var(--bg);transform:scale(0.97)}
+.btn-ghost{color:var(--text-mid);background:transparent;border:none}
+.btn-ghost:hover{color:var(--text);background:var(--surface-tint)}
+.btn-ghost:active{background:var(--primary-50);transform:scale(0.97)}
+.btn-outline{border:1px solid var(--border);color:var(--text-mid);background:var(--card)}
+.btn-outline:hover{border-color:var(--primary-400);background:var(--primary-50)}
+.btn-outline:active{background:var(--bg);transform:scale(0.97)}
+.btn-sm{padding:var(--space-2) var(--space-3);font-size:13px;border-radius:var(--radius-sm)}
+.btn-block{display:flex;width:100%}
+
+/* 标签 */
+.tag{display:inline-flex;align-items:center;gap:var(--space-1);padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);font-size:11px;font-weight:var(--fw-medium);margin-right:var(--space-1);transition:all var(--duration-fast)}
+.tag:hover{transform:scale(1.03)}
+.tag-product{background:var(--accent-100);color:var(--accent)}
+.tag-daily{background:var(--green-100);color:var(--green)}
+.tag-skill{background:var(--blue-100);color:var(--blue)}
+.tag-view{background:var(--pink-100);color:var(--pink)}
+.tag-interact{background:var(--primary-50);color:var(--primary-400)}
+
+/* 选题卡片 */
+.topic-item{
+  background:var(--bg);border-radius:var(--radius-lg);padding:var(--space-3);
+  margin-bottom:var(--space-2);border:1px solid var(--border-light);
+  transition:all var(--duration-normal) var(--ease-out);box-shadow:var(--shadow-sm);
+}
+.topic-item:hover{border-color:var(--primary-300);box-shadow:var(--shadow-md)}
+.topic-item:active{border-color:var(--primary);background:var(--card);transform:scale(0.98)}
+.topic-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-2);margin-bottom:var(--space-2)}
+.topic-title{font-size:14px;font-weight:var(--fw-medium);line-height:1.45;flex:1;color:var(--text)}
+.topic-status{font-size:18px;flex-shrink:0;line-height:1}
+.topic-meta{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-2)}
+.topic-desc{font-size:12px;color:var(--text-light);margin-top:var(--space-2);line-height:1.5}
+
+/* 子Tab */
+.subtabs{display:flex;gap:var(--space-2);margin-bottom:var(--space-4);overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:var(--space-1)}
+.subtab{padding:var(--space-2) var(--space-4);border-radius:var(--radius-full);font-size:13px;font-weight:var(--fw-medium);white-space:nowrap;background:var(--card);border:1px solid var(--border);color:var(--text-light);transition:all var(--duration-normal) var(--ease-out)}
+.subtab:hover{border-color:var(--primary-400);color:var(--text-mid)}
+.subtab.active{background:var(--primary);color:var(--card);border-color:var(--primary);box-shadow:var(--shadow-sm)}
+
+/* 待办项 */
+.todo-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--border-light)}
+.todo-item:last-child{border-bottom:none}
+.todo-check{width:24px;height:24px;border-radius:var(--radius-full);border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all var(--duration-normal) var(--ease-spring);font-size:12px;color:var(--card)}
+.todo-check:hover{border-color:var(--primary-400)}
+.todo-check.done{background:var(--green);border-color:var(--green);box-shadow:0 2px 8px rgba(107,155,126,0.25);animation:checkPop var(--duration-normal) var(--ease-spring)}
+.todo-text{flex:1;font-size:14px;line-height:1.4}
+.todo-text.done{color:var(--text-muted);text-decoration:line-through}
+.todo-del{font-size:16px;color:var(--text-muted);padding:var(--space-1);flex-shrink:0;transition:color var(--duration-fast)}
+.todo-del:hover{color:var(--pink)}
+
+/* 灵感记录 */
+.idea-item{
+  background:var(--bg);border-radius:var(--radius-lg);padding:var(--space-4);
+  margin-bottom:var(--space-2);border:1px solid var(--border-light);
+  border-left:3px solid var(--primary-300);transition:all var(--duration-normal) var(--ease-out);
+  animation:ideaEnter var(--duration-normal) var(--ease-out);
+}
+.idea-item:hover{border-left-color:var(--primary);box-shadow:var(--shadow-md)}
+.idea-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)}
+.idea-date{font-size:11px;color:var(--text-light)}
+.idea-account{font-size:11px;padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary)}
+.idea-content{font-size:14px;line-height:1.5}
+
+/* 心情 */
+.mood-picker{display:flex;gap:var(--space-3);margin:var(--space-3) 0}
+.mood{font-size:28px;opacity:0.35;transition:all var(--duration-normal) var(--ease-spring);cursor:pointer}
+.mood:hover{opacity:0.6;transform:scale(1.1)}
+.mood.selected{opacity:1;transform:scale(1.25)}
+
+/* 账号概览 */
+.overview-account{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);background:var(--bg);border-radius:var(--radius-lg);margin-bottom:var(--space-2);border:1px solid var(--border-light);transition:all var(--duration-normal) var(--ease-out)}
+.overview-account:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.overview-avatar{width:44px;height:44px;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:var(--shadow-sm)}
+.overview-info{flex:1}
+.overview-name{font-size:15px;font-weight:var(--fw-semibold)}
+.overview-desc{font-size:12px;color:var(--text-light);margin-top:2px}
+
+/* 空状态 */
+.empty{text-align:center;padding:var(--space-8) var(--space-4);color:var(--text-light);font-size:14px}
+.empty-icon{font-size:48px;display:block;margin-bottom:var(--space-3);opacity:0.5;animation:emptyFloat 3s ease-in-out infinite}
+.empty-text{font-size:14px;color:var(--text-light);margin-bottom:var(--space-2)}
+.empty-hint{font-size:12px;color:var(--text-muted)}
+
+/* Toast */
+.toast{position:fixed;bottom:var(--space-8);left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--card);padding:var(--space-2) var(--space-6);border-radius:var(--radius-full);font-size:13px;z-index:999;opacity:0;transition:all var(--duration-normal) var(--ease-out);pointer-events:none;letter-spacing:0.3px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 进度条 */
+.progress-bar{height:6px;background:var(--border);border-radius:var(--radius-full);overflow:hidden;margin-top:var(--space-1)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green-700),var(--green));border-radius:var(--radius-full);transition:width var(--duration-slow) var(--ease-out)}
+
+/* 统计 */
+.report-section{margin-bottom:var(--space-5)}
+.report-section-title{font-size:12px;font-weight:var(--fw-semibold);color:var(--text-mid);margin-bottom:var(--space-3);display:flex;align-items:center;gap:var(--space-1);letter-spacing:0.5px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.stat-box{background:var(--bg-subtle);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-3);text-align:center;border:1px solid var(--border-light);transition:all var(--duration-normal) var(--ease-out);position:relative}
+.stat-box:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.stat-icon{font-size:22px;margin-bottom:var(--space-1);display:block}
+.stat-num{font-size:26px;font-weight:var(--fw-bold);color:var(--primary);line-height:1.2;letter-spacing:-0.5px;animation:numPop var(--duration-normal) var(--ease-spring)}
+.stat-label{font-size:11px;color:var(--text-light);margin-top:var(--space-1)}
+.stat-trend{font-size:10px;margin-top:var(--space-1);display:inline-flex;align-items:center;gap:2px}
+.stat-trend-up{color:var(--green)}
+.stat-trend-down{color:var(--pink)}
+.stat-box.accent .stat-num{color:var(--accent)}
+.stat-box.green .stat-num{color:var(--green)}
+.stat-box.blue .stat-num{color:var(--blue)}
+.stat-box.pink .stat-num{color:var(--pink)}
+.bar-chart{display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2)}
+.bar-row{display:flex;align-items:center;gap:var(--space-2);font-size:12px}
+.bar-label{width:60px;flex-shrink:0;color:var(--text-light)}
+.bar-track{flex:1;height:20px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:var(--radius-sm);transition:width var(--duration-slow) var(--ease-out);display:flex;align-items:center;justify-content:flex-end;padding-right:var(--space-1);font-size:10px;color:var(--card);font-weight:var(--fw-semibold);min-width:24px}
+.report-summary{background:var(--primary-bg);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);font-size:13px;line-height:1.7;color:var(--text);margin-top:var(--space-3)}
+
+/* ==================== 响应式宽屏 ==================== */
+@media screen and (min-width:768px){
+  #app{max-width:none;height:100vh}
+  .sidebar{width:var(--sidebar-w-wide);padding-top:var(--space-6);box-shadow:none}
+  .sidebar-logo{width:48px;height:48px;font-size:22px;margin-bottom:var(--space-7);border-radius:var(--radius-xl)}
+  .sidebar-nav{align-items:stretch;padding:0 var(--space-3);gap:var(--space-2)}
+  .nav-item{width:100%;height:48px;flex-direction:row;justify-content:flex-start;gap:var(--space-3);padding:0 var(--space-4);border-radius:var(--radius-md)}
+  .nav-item .nav-icon{font-size:22px}
+  .nav-item .nav-label{font-size:13px}
+  .nav-item.active::before{width:4px;height:24px;left:-4px;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+  .topbar{padding:var(--space-6) var(--space-8) var(--space-4)}
+  .topbar h1{font-size:24px}
+  .topbar .top-date{font-size:13px}
+  .topbar-progress-bar{width:120px}
+  .content{width:100%;padding:var(--space-2) var(--space-8) var(--space-8);max-width:1200px;margin:0 auto}
+  #page-plan.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-topics.active{display:block !important}
+  #page-idea.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-life.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-overview.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-plan > #workflowCard{grid-column:1/-1}
+  #page-plan > #weeklyCard{grid-column:1/-1}
+  #page-plan > div[style*="text-align:center"]{grid-column:1/-1}
+  #page-plan > .card{margin-bottom:0}
+  #page-topics > #dailyCard{margin-bottom:var(--space-4)}
+  #page-topics > .subtabs{margin-bottom:var(--space-4)}
+  #page-idea > .card{margin-bottom:0}
+  #page-idea > .section-label{grid-column:1/-1}
+  #page-idea > #ideaList{grid-column:1/-1}
+  #page-life > .card{margin-bottom:0}
+  #page-life > .section-label{grid-column:1/-1}
+  #page-life > #lifeHistory{grid-column:1/-1}
+  #page-overview > .card{margin-bottom:0}
+  #page-overview > #reportCard{grid-column:1/-1}
+  #page-overview > #syncCard{grid-column:1/-1}
+  #page-overview > #localCard{grid-column:1/-1}
+  #page-overview > div:last-child{grid-column:1/-1}
+  .stat-grid{grid-template-columns:repeat(4,1fr);gap:var(--space-3)}
+  .card{padding:var(--space-6) var(--space-5)}
+  .input,.textarea{font-size:14px}
+  .toast{bottom:var(--space-10)}
+}
+
+/* ==================== 预览页专用 ==================== */
+.preview-banner{
+  background:linear-gradient(135deg,var(--primary),var(--primary-700));
+  color:var(--card);padding:var(--space-4);text-align:center;
+  font-size:12px;font-weight:var(--fw-medium);letter-spacing:1px;
+  position:sticky;top:0;z-index:20;
+}
+.preview-banner span{opacity:0.8;font-size:11px;margin-left:var(--space-2)}
+</style>
+</head>
+<body>
+<!-- 预览说明 -->
+<div class="preview-banner">
+  ✨ 鹿系工作台 · 新UI预览 <span>这是设计预览，确认满意后应用到正式版</span>
+</div>
+
+<div id="app">
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-logo">鹿</div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="switchPage('plan')"><span class="nav-icon">📋</span><span class="nav-label">计划</span></div>
+      <div class="nav-item" onclick="switchPage('topics')"><span class="nav-icon">📚</span><span class="nav-label">选题</span></div>
+      <div class="nav-item" onclick="switchPage('idea')"><span class="nav-icon">💡</span><span class="nav-label">灵感</span></div>
+      <div class="nav-item" onclick="switchPage('life')"><span class="nav-icon">📖</span><span class="nav-label">生活</span></div>
+      <div class="nav-item" onclick="switchPage('overview')"><span class="nav-icon">📊</span><span class="nav-label">总览</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-item" onclick="toggleDarkMode()" id="darkToggle">
+        <span class="nav-icon" id="darkIcon">🌙</span>
+        <span class="nav-label" id="darkLabel">深色</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主区域 -->
+  <div class="main">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="pageTitle">今日计划</h1>
+        <div class="topbar-progress">
+          <span id="progressLabel">已完成 3/8</span>
+          <div class="topbar-progress-bar">
+            <div class="topbar-progress-fill" id="progressFill" style="width:37.5%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="top-date">7月24日 周四</span>
+        <div class="topbar-dark-btn" onclick="toggleDarkMode()" id="topDarkBtn" title="切换深色模式">🌙</div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content" id="content">
+
+      <!-- ===== 页面0: 每日计划 ===== -->
+      <div class="page active" id="page-plan">
+        <div style="text-align:center;margin-bottom:var(--space-4)">
+          <div style="font-size:13px;color:var(--text-light)">2026年7月24日 · 周四</div>
+        </div>
+
+        <!-- 工作流（主卡片） -->
+        <div class="card card-primary" id="workflowCard">
+          <div class="card-title">
+            <span class="emoji">⏰</span>今日工作流
+            <span style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary);font-weight:var(--fw-medium)">晨间</span>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--primary);margin-bottom:var(--space-2)">🌅 晨间 15min · 快速整理今天</div>
+            <div id="morningChecklist">
+              <div class="todo-item">
+                <div class="todo-check done">✓</div>
+                <span class="todo-text done">看昨日数据，记录到数据速记</span>
+              </div>
+              <div class="todo-item">
+                <div class="todo-check done">✓</div>
+                <span class="todo-text done">确认今天发哪个账号</span>
+              </div>
+              <div class="todo-item">
+                <div class="todo-check"></div>
+                <span class="todo-text">看今日选题推荐，选定1个</span>
+              </div>
+              <div class="todo-item">
+                <div class="todo-check"></div>
+                <span class="todo-text">填三件最重要的事</span>
+              </div>
+            </div>
+            <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+              <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics')">🌟 看今日选题</button>
+              <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px">🎯 填三件事</button>
+            </div>
+          </div>
+          <div style="margin-top:var(--space-3)">
+            <button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:5px 8px">🌙 切到晚间复盘</button>
+          </div>
+          <div style="margin-top:var(--space-2);font-size:10px;color:var(--text-muted);text-align:center">周日 30min：三账号复盘 → 调整下周选题</div>
+        </div>
+
+        <!-- 三件最重要 -->
+        <div class="card" id="top3Card">
+          <div class="card-title"><span class="emoji">🎯</span>三件最重要</div>
+          <div id="top3List">
+            <div class="todo-item">
+              <div class="todo-check"></div>
+              <span class="todo-text">拍鹿溪风书法文创新品展示视频</span>
+              <span class="todo-del">✕</span>
+            </div>
+            <div class="todo-item">
+              <div class="todo-check done">✓</div>
+              <span class="todo-text done">回复小红书评论</span>
+              <span class="todo-del">✕</span>
+            </div>
+            <div class="todo-item">
+              <div class="todo-check"></div>
+              <span class="todo-text">整理鹿住新家装修进度素材</span>
+              <span class="todo-del">✕</span>
+            </div>
+          </div>
+          <div style="margin-top:var(--space-2);display:flex;gap:var(--space-2)">
+            <input class="input" placeholder="添加一件最重要的事..." style="flex:1">
+            <button class="btn btn-primary btn-sm">添加</button>
+          </div>
+        </div>
+
+        <!-- 发布追踪 -->
+        <div class="card">
+          <div class="card-title"><span class="emoji">📤</span>发布追踪</div>
+          <table class="track-table" style="width:100%;border-collapse:collapse;font-size:13px">
+            <tr><th style="text-align:left;font-weight:var(--fw-medium);color:var(--text-light);padding:var(--space-2) 0;border-bottom:1px solid var(--border);font-size:11px">账号</th><th style="text-align:left;font-weight:var(--fw-medium);color:var(--text-light);padding:var(--space-2) 0;border-bottom:1px solid var(--border);font-size:11px">小红书</th><th style="text-align:left;font-weight:var(--fw-medium);color:var(--text-light);padding:var(--space-2) 0;border-bottom:1px solid var(--border);font-size:11px">抖音</th></tr>
+            <tr><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)">鹿溪风</td><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)"><span class="tag tag-product">产品</span></td><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)">—</td></tr>
+            <tr><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)">鹿住新家</td><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)">—</td><td style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)"><span class="tag tag-daily">日常</span></td></tr>
+            <tr><td style="padding:var(--space-2) 0">鹿慢慢</td><td style="padding:var(--space-2) 0">—</td><td style="padding:var(--space-2) 0">—</td></tr>
+          </table>
+        </div>
+
+        <!-- 今日小记 -->
+        <div class="card">
+          <div class="card-title"><span class="emoji">📝</span>今日小记</div>
+          <textarea class="textarea" placeholder="今天有什么想记住的..." style="min-height:50px">今天状态不错，上午完成了书法视频拍摄，下午整理了装修素材。</textarea>
+        </div>
+      </div>
+
+      <!-- ===== 页面1: 选题库 ===== -->
+      <div class="page" id="page-topics">
+        <!-- 今日推荐（主卡片） -->
+        <div class="card card-primary" id="dailyCard">
+          <div class="card-title"><span class="emoji">🌟</span>今日选题推荐<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">每日更新</span></div>
+          <div style="font-size:12px;color:var(--text-mid);margin-bottom:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--surface-tint);border-radius:var(--radius-sm)">💡 三账号各推荐5个选题，选定后可加入计划，不喜欢可永久拒绝</div>
+
+          <!-- 鹿溪风推荐 -->
+          <div style="margin-bottom:var(--space-4)">
+            <div style="font-size:13px;font-weight:var(--fw-semibold);color:var(--accent);margin-bottom:var(--space-2)">🦌 鹿溪风 · 书法文创</div>
+            <div class="topic-item">
+              <div class="topic-head">
+                <span class="topic-title">夏日清凉款书法扇面：写一首关于荷花的古诗</span>
+                <span class="topic-status" style="color:var(--text-muted)">○</span>
+              </div>
+              <div class="topic-meta">
+                <span class="tag tag-product">产品展示</span>
+                <span class="tag tag-skill">干货</span>
+              </div>
+              <div class="topic-desc">结合时令的扇面书法创作过程 + 成品展示</div>
+            </div>
+            <div class="topic-item">
+              <div class="topic-head">
+                <span class="topic-title">书法文创工作室一日 Vlog</span>
+                <span class="topic-status" style="color:var(--text-muted)">○</span>
+              </div>
+              <div class="topic-meta"><span class="tag tag-daily">日常</span></div>
+            </div>
+            <div style="text-align:center;margin-top:var(--space-2)">
+              <button class="btn btn-ghost btn-sm">换一批 ↻</button>
+            </div>
+          </div>
+
+          <!-- 鹿住新家推荐 -->
+          <div style="margin-bottom:var(--space-4)">
+            <div style="font-size:13px;font-weight:var(--fw-semibold);color:var(--blue);margin-bottom:var(--space-2)">🏠 鹿住新家 · 400㎡装修</div>
+            <div class="topic-item">
+              <div class="topic-head">
+                <span class="topic-title">地下室采光解决方案：设计师老公怎么做的</span>
+                <span class="topic-status" style="color:var(--blue)">✓</span>
+              </div>
+              <div class="topic-meta"><span class="tag tag-skill">干货</span><span class="tag tag-view">观点</span></div>
+            </div>
+            <div class="topic-item">
+              <div class="topic-head">
+                <span class="topic-title">一楼带地下室复式 · 空间规划思路</span>
+                <span class="topic-status" style="color:var(--text-muted)">○</span>
+              </div>
+              <div class="topic-meta"><span class="tag tag-skill">干货</span></div>
+            </div>
+          </div>
+
+          <!-- 鹿慢慢推荐 -->
+          <div>
+            <div style="font-size:13px;font-weight:var(--fw-semibold);color:var(--green);margin-bottom:var(--space-2)">🌿 鹿慢慢 · 个人IP</div>
+            <div class="topic-item">
+              <div class="topic-head">
+                <span class="topic-title">创业妈妈的自我管理：如何在带娃和工作间找平衡</span>
+                <span class="topic-status" style="color:var(--text-muted)">○</span>
+              </div>
+              <div class="topic-meta"><span class="tag tag-view">观点</span><span class="tag tag-interact">互动</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 选题库 -->
+        <div class="subtabs">
+          <div class="subtab active" onclick="switchAccount('luxe')">鹿溪风</div>
+          <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
+          <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
+        </div>
+        <div id="topicsContainer">
+          <div class="section-label">产品展示方向</div>
+          <div class="topic-item">
+            <div class="topic-head">
+              <span class="topic-title">夏日清凉款书法扇面</span>
+              <span class="topic-status" style="color:var(--green)">●</span>
+            </div>
+            <div class="topic-meta"><span class="tag tag-product">产品展示</span></div>
+            <div class="topic-desc">结合时令的扇面书法创作过程 + 成品展示</div>
+          </div>
+          <div class="topic-item">
+            <div class="topic-head">
+              <span class="topic-title">书法文创工作室一日 Vlog</span>
+              <span class="topic-status" style="color:var(--blue)">◐</span>
+            </div>
+            <div class="topic-meta"><span class="tag tag-product">产品展示</span><span class="tag tag-daily">日常</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 页面2: 灵感记录 ===== -->
+      <div class="page" id="page-idea">
+        <div class="card">
+          <div class="card-title"><span class="emoji">💡</span>快速记录</div>
+          <textarea class="textarea" placeholder="想到什么写什么，不用在意排版..." style="min-height:80px"></textarea>
+          <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2);align-items:center">
+            <select class="input" style="flex:1;padding:var(--space-2) var(--space-3);font-size:13px">
+              <option value="">选择账号（可选）</option>
+              <option value="luxe">鹿溪风</option>
+              <option value="home">鹿住新家</option>
+              <option value="slow">鹿慢慢</option>
+            </select>
+            <button class="btn btn-ghost" style="font-size:20px" title="语音输入">🎤</button>
+            <button class="btn btn-primary btn-sm">记录</button>
+          </div>
+        </div>
+
+        <div class="section-label">灵感收集箱</div>
+        <div id="ideaList">
+          <div class="idea-item">
+            <div class="idea-top">
+              <span class="idea-date">7月24日 10:32</span>
+              <span class="idea-account">鹿溪风</span>
+            </div>
+            <div class="idea-content">可以在扇面上写一些简短的诗句，配合夏日场景拍摄，会比纯产品展示更有意境</div>
+          </div>
+          <div class="idea-item">
+            <div class="idea-top">
+              <span class="idea-date">7月23日 21:15</span>
+              <span class="idea-account">鹿住新家</span>
+            </div>
+            <div class="idea-content">地下室的采光井可以做一个植物角，这样既解决了采光问题又增加了生活感</div>
+          </div>
+          <div class="idea-item">
+            <div class="idea-top">
+              <span class="idea-date">7月23日 14:20</span>
+              <span class="idea-account">鹿慢慢</span>
+            </div>
+            <div class="idea-content">创业妈妈的时间管理其实不是管理时间，是管理精力。这个点可以展开写一篇</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 页面3: 生活记录 ===== -->
+      <div class="page" id="page-life">
+        <div class="card">
+          <div class="card-title"><span class="emoji">📖</span>今日生活</div>
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)" id="lifeDate">7月24日 周四</div>
+
+          <div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">今天心情怎么样？</div>
+          <div class="mood-picker" id="moodPicker">
+            <span class="mood selected">😊</span>
+            <span class="mood">😐</span>
+            <span class="mood">😮‍💨</span>
+            <span class="mood">😢</span>
+            <span class="mood">🥰</span>
+            <span class="mood">😴</span>
+          </div>
+
+          <div style="margin-bottom:var(--space-3)">
+            <div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">今天发生了什么？</div>
+            <textarea class="textarea" placeholder="记录今天值得记住的事..." style="min-height:50px">今天拍了书法扇面的视频，效果很好。下午和老公讨论了地下室植物角的方案。</textarea>
+          </div>
+
+          <div style="margin-bottom:var(--space-3)">
+            <div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">今天的感受？</div>
+            <textarea class="textarea" placeholder="心情、感悟..." style="min-height:40px">感觉创作状态回来了，很开心。</textarea>
+          </div>
+
+          <div style="margin-bottom:var(--space-3)">
+            <div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">感恩三件小事 🙏</div>
+            <textarea class="textarea" placeholder="1. ...&#10;2. ...&#10;3. ..." style="min-height:40px">1. 天气好，光线好
+2. 老公帮我想了植物角的点子
+3. 孩子今天很乖</textarea>
+          </div>
+
+          <button class="btn btn-primary btn-block">保存今日记录</button>
+        </div>
+
+        <div class="section-label">往期记录</div>
+        <div id="lifeHistory">
+          <div class="idea-item" style="border-left-color:var(--pink-300)">
+            <div class="idea-top">
+              <span class="idea-date">7月23日 周三</span>
+              <span style="font-size:20px">😐</span>
+            </div>
+            <div class="idea-content">今天有点累，没怎么创作。带孩子去公园玩了一下...</div>
+          </div>
+          <div class="idea-item" style="border-left-color:var(--green-300)">
+            <div class="idea-top">
+              <span class="idea-date">7月22日 周二</span>
+              <span style="font-size:20px">🥰</span>
+            </div>
+            <div class="idea-content">今天和家人一起整理了装修材料清单，老公画了地下室布局图...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 页面4: 总览 ===== -->
+      <div class="page" id="page-overview">
+        <!-- 三个独立账号 -->
+        <div class="card">
+          <div class="card-title"><span class="emoji">🦌</span>三个独立账号</div>
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--accent-100)">🦌</div>
+            <div class="overview-info">
+              <div class="overview-name">鹿溪风</div>
+              <div class="overview-desc">书法文创产品变现 · 售卖+引流</div>
+            </div>
+          </div>
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--blue-100)">🏠</div>
+            <div class="overview-info">
+              <div class="overview-name">鹿住新家</div>
+              <div class="overview-desc">设计师老公操刀 · 400㎡带地下室复式装修全程</div>
+            </div>
+          </div>
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--green-100)">🌿</div>
+            <div class="overview-info">
+              <div class="overview-name">鹿慢慢</div>
+              <div class="overview-desc">个人IP · 创业妈妈/育儿/家庭/女性成长</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 运营报告（主卡片） -->
+        <div class="card card-primary" id="reportCard">
+          <div class="card-title">
+            <span class="emoji">📊</span>运营报告
+            <div style="margin-left:auto;display:flex;gap:var(--space-1)">
+              <button class="subtab active" style="padding:var(--space-1) var(--space-3);font-size:12px" onclick="switchReportRange('week')">周报</button>
+              <button class="subtab" style="padding:var(--space-1) var(--space-3);font-size:12px" onclick="switchReportRange('month')">月报</button>
+              <button class="subtab" style="padding:var(--space-1) var(--space-3);font-size:12px" onclick="switchReportRange('year')">年报</button>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <div class="report-section-title">📈 本周数据</div>
+            <div class="stat-grid">
+              <div class="stat-box green">
+                <span class="stat-icon">✅</span>
+                <div class="stat-num">3</div>
+                <div class="stat-label">已发布</div>
+                <div class="stat-trend stat-trend-up">↑ 50%</div>
+              </div>
+              <div class="stat-box blue">
+                <span class="stat-icon">📝</span>
+                <div class="stat-num">7</div>
+                <div class="stat-label">选题完成</div>
+              </div>
+              <div class="stat-box accent">
+                <span class="stat-icon">💡</span>
+                <div class="stat-num">5</div>
+                <div class="stat-label">灵感记录</div>
+                <div class="stat-trend stat-trend-up">↑ 2</div>
+              </div>
+              <div class="stat-box pink">
+                <span class="stat-icon">📖</span>
+                <div class="stat-num">4</div>
+                <div class="stat-label">生活记录</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <div class="report-section-title">📊 三账号发布数</div>
+            <div class="bar-chart">
+              <div class="bar-row">
+                <span class="bar-label">鹿溪风</span>
+                <div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--accent)">2</div></div>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">鹿住新家</span>
+                <div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--blue)">1</div></div>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">鹿慢慢</span>
+                <div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--green)">1</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-summary">
+            📌 <strong>本周总结：</strong>发布3条，比上周多1条。鹿溪风发布稳定，鹿住新家可以加快节奏。灵感记录比上周多2条，保持这个节奏。下周建议聚焦鹿住新家装修进度内容。
+          </div>
+        </div>
+
+        <!-- 云端同步 -->
+        <div class="card" id="syncCard">
+          <div class="card-title"><span class="emoji">☁️</span>云端同步</div>
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-3)">自动同步已开启 · 数据实时上传云端</div>
+          <div style="display:flex;gap:var(--space-2)">
+            <button class="btn btn-outline btn-sm" style="flex:1">📤 手动上传</button>
+            <button class="btn btn-outline btn-sm" style="flex:1">📥 手动拉取</button>
+          </div>
+        </div>
+
+        <!-- 本地操作 -->
+        <div class="card" id="localCard">
+          <div class="card-title"><span class="emoji">💾</span>本地操作</div>
+          <div style="display:flex;gap:var(--space-2)">
+            <button class="btn btn-outline btn-sm" style="flex:1">导出数据</button>
+            <button class="btn btn-outline btn-sm" style="flex:1">导入数据</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;color:var(--pink-700);border-color:var(--pink-300)">清空</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:var(--space-4) 0;color:var(--text-muted);font-size:11px">
+          鹿系工作台 v3.0 · 新UI预览
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">已切换到深色模式</div>
+
+<script>
+var darkMode = false;
+var currentPage = 'plan';
+
+// 自动跟随系统
+var mq = window.matchMedia('(prefers-color-scheme: dark)');
+darkMode = mq.matches;
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = darkMode ? '#1A1614' : '#7B6B5E';
+  updateDarkBtn();
+}
+function toggleDarkMode(){
+  darkMode = !darkMode;
+  applyTheme();
+  showToast(darkMode ? '已切换到深色模式 🌙' : '已切换到浅色模式 ☀️');
+}
+function updateDarkBtn(){
+  var icon = document.getElementById('darkIcon');
+  var label = document.getElementById('darkLabel');
+  var topBtn = document.getElementById('topDarkBtn');
+  if(icon) icon.textContent = darkMode ? '☀️' : '🌙';
+  if(label) label.textContent = darkMode ? '浅色' : '深色';
+  if(topBtn) topBtn.textContent = darkMode ? '☀️' : '🌙';
+}
+
+// 监听系统主题变化
+mq.addEventListener('change', function(e){
+  darkMode = e.matches;
+  applyTheme();
+  showToast(darkMode ? '跟随系统切换到深色 🌙' : '跟随系统切换到浅色 ☀️');
+});
+
+var titles = {plan:'今日计划', topics:'选题库', idea:'灵感记录', life:'生活记录', overview:'总览'};
+function switchPage(name){
+  currentPage = name;
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  var page = document.getElementById('page-'+name);
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    if(n.id == 'darkToggle') return;
+    n.classList.remove('active');
+  });
+  event.currentTarget.classList.add('active');
+  document.getElementById('pageTitle').textContent = titles[name] || '';
+  // 模拟进度更新
+  updateProgressDemo(name);
+}
+
+function switchAccount(acc, evt){
+  document.querySelectorAll('.subtab').forEach(function(s){s.classList.remove('active')});
+  if(evt) evt.currentTarget.classList.add('active');
+  else event.currentTarget.classList.add('active');
+}
+
+function switchReportRange(range){
+  document.querySelectorAll('#reportCard .subtab').forEach(function(s){s.classList.remove('active')});
+  event.currentTarget.classList.add('active');
+}
+
+function updateProgressDemo(name){
+  var demos = {plan:'3/8', topics:'2/5', idea:'1/3', life:'4/6', overview:'5/5'};
+  var pcts = {plan:'37.5%', topics:'40%', idea:'33%', life:'66%', overview:'100%'};
+  var label = document.getElementById('progressLabel');
+  var fill = document.getElementById('progressFill');
+  if(label) label.textContent = '已完成 ' + demos[name];
+  if(fill) fill.style.width = pcts[name];
+}
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show')}, 2000);
+}
+
+// 心情选择
+document.querySelectorAll('.mood').forEach(function(m){
+  m.addEventListener('click', function(){
+    document.querySelectorAll('.mood').forEach(function(x){x.classList.remove('selected')});
+    m.classList.add('selected');
+  });
+});
+
+// 初始化
+applyTheme();
+</script>
+</body>
+</html>
