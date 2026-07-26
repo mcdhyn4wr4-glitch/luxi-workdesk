@@ -948,6 +948,72 @@ var TOPICS = {
 };
 
 var TAG_MAP = { product:'产品', daily:'日常', skill:'干货', view:'观点', interact:'互动' };
+
+/* 每周补充选题候选池 */
+var WEEKLY_EXTRA = {
+  luxe: [
+    { t:'用不同字体写同一个字，你更喜欢哪个？', tag:'interact', dy:'逐字体书写对比', xhs:'对比图' },
+    { t:'收到客户返图：她把我的字挂在了办公室', tag:'daily', dy:'客户反馈展示', xhs:'返图+故事' },
+    { t:'一支毛笔能用多久？怎么洗笔保养', tag:'skill', dy:'保养全过程', xhs:'保养图文' },
+    { t:'今日练习：抄一段喜欢的词', tag:'daily', dy:'书写过程', xhs:'成品+原文' },
+    { t:'把废纸变成书签的过程', tag:'daily', dy:'手工改造过程', xhs:'before/after' }
+  ],
+  home: [
+    { t:'本周装修进度汇总', tag:'daily', dy:'工地实拍+口述', xhs:'进度图文' },
+    { t:'装修中最容易超支的3个地方', tag:'skill', dy:'逐项讲解', xhs:'避坑清单' },
+    { t:'和设计师（老公）吵架了：设计分歧怎么解决', tag:'view', dy:'口述+场景', xhs:'观点图文' },
+    { t:'选了哪些品牌材料？清单+价格', tag:'skill', dy:'逐项展示', xhs:'品牌清单图' },
+    { t:'装修日记：本周最开心和最崩溃的瞬间', tag:'daily', dy:'vlog', xhs:'心情图文' }
+  ],
+  slow: [
+    { t:'创业第X天：今天的状态', tag:'daily', dy:'口述vlog', xhs:'状态图文' },
+    { t:'带娃日常：今天孩子说的一句话让我愣住了', tag:'daily', dy:'场景重拍', xhs:'亲子图文' },
+    { t:'最近在读的书：一段话分享+我的感受', tag:'view', dy:'书本+口述', xhs:'书摘+感悟' },
+    { t:'一个人独处的下午，我做了什么', tag:'daily', dy:'环境vlog', xhs:'独处图文' },
+    { t:'本周复盘：做了什么/学到了什么/下周计划', tag:'daily', dy:'口述复盘', xhs:'复盘图文' }
+  ]
+};
+
+/* 每周自动补充选题 */
+function checkWeeklyTopics(){
+  var weekKey = getWeekKey();
+  var last = DB.get('last_week_topics', '');
+  if(last === weekKey) return; // 本周已补充
+  ACCOUNTS.forEach(function(acc){
+    var pool = WEEKLY_EXTRA[acc] || [];
+    if(pool.length === 0) return;
+    // 随机选2个加入选题库
+    var picked = pool.sort(function(){ return Math.random() - 0.5; }).slice(0, 2);
+    picked.forEach(function(topic){
+      // 检查是否已存在
+      var existing = TOPICS[acc].directions;
+      var exists = false;
+      existing.forEach(function(dir){
+        dir.topics.forEach(function(t){
+          if(t.t === topic.t) exists = true;
+        });
+      });
+      if(!exists){
+        // 找第一个方向加入
+        if(existing.length > 0){
+          existing[0].topics.push({ d:1, t:topic.t, tag:topic.tag, dy:topic.dy, xhs:topic.xhs });
+        }
+      }
+    });
+  });
+  DB.set('last_week_topics', weekKey);
+  // 保存到本地
+  DB.set('topics_data', TOPICS);
+}
+
+function getWeekKey(){
+  var d = new Date();
+  var year = d.getFullYear();
+  var start = new Date(year, 0, 1);
+  var diff = (d - start) / 86400000;
+  var week = Math.ceil((diff + start.getDay() + 1) / 7);
+  return year + '-W' + week;
+}
 var STATUS_LIST = [
   { v:'idea', icon:'💡', label:'构想', cls:'st-idea' },
   { v:'script', icon:'📝', label:'脚本', cls:'st-script' },
@@ -2709,6 +2775,7 @@ document.getElementById('topDate').textContent = formatDate();
   DB.set('realtime_sync', true);
 })();
 // 1. 先用本地数据立即渲染（保证页面秒开）
+checkWeeklyTopics();
 renderWorkflow();
 renderDaily();
 renderPlan();
