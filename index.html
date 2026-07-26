@@ -803,7 +803,7 @@ var EVENING_STEPS = [
   { key:'data', text:'记今日数据', hint:'数据速记' }
 ];
 
-function getWorkflow(){ return DB.get('workflow_'+todayKey(), { morning:{}, evening:{} }); }
+function getWorkflow(){ return DB.get('workflow_'+todayKey(), { morning:{}, evening:{}, custom_morning:[], custom_evening:[] }); }
 function saveWorkflow(w){ DB.set('workflow_'+todayKey(), w); }
 
 function renderWorkflow(){
@@ -811,8 +811,10 @@ function renderWorkflow(){
   var phase = workflowPhase;
   var steps = phase === 'morning' ? MORNING_STEPS : EVENING_STEPS;
   var done = w[phase] || {};
+  var customSteps = w['custom_'+phase] || [];
 
   var html = '';
+  // 默认步骤
   steps.forEach(function(s){
     var isDone = !!done[s.key];
     html += '<div class="todo-item" onclick="toggleWorkflowStep(\''+s.key+'\')">'+
@@ -820,6 +822,20 @@ function renderWorkflow(){
       '<div style="flex:1"><div class="todo-text '+(isDone?'done':'')+'">'+s.text+'</div>'+
       '<div style="font-size:11px;color:var(--text-light);margin-top:1px">'+s.hint+'</div></div></div>';
   });
+  // 自定义步骤
+  customSteps.forEach(function(s, i){
+    var ck = 'custom_'+i;
+    var isDone = !!done[ck];
+    html += '<div class="todo-item" onclick="toggleWorkflowStep(\''+ck+'\')">'+
+      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'✓':'')+'</div>'+
+      '<div style="flex:1"><div class="todo-text '+(isDone?'done':'')+'">'+esc(s)+'</div></div>'+
+      '<span class="todo-del" onclick="delCustomWorkflowStep('+i+',event)">✕</span></div>';
+  });
+  // 添加自定义项的输入框
+  html += '<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'+
+    '<input class="input" id="workflowCustomInput_'+phase+'" placeholder="添加自己的步骤..." style="flex:1;font-size:13px;padding:7px 11px">'+
+    '<button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 12px" onclick="addCustomWorkflowStep(\''+phase+'\')">+</button>'+
+    '</div>';
   var container = document.getElementById(phase === 'morning' ? 'morningChecklist' : 'eveningChecklist');
   if(container) container.innerHTML = html;
 }
@@ -830,7 +846,31 @@ function toggleWorkflowStep(key){
   w[workflowPhase][key] = !w[workflowPhase][key];
   saveWorkflow(w);
   renderWorkflow();
-  // 数据变更，触发实时同步
+  scheduleRealtimeSync();
+}
+
+function addCustomWorkflowStep(phase){
+  var inp = document.getElementById('workflowCustomInput_'+phase);
+  if(!inp || !inp.value.trim()) return;
+  var w = getWorkflow();
+  var key = 'custom_'+phase;
+  if(!w[key]) w[key] = [];
+  w[key].push(inp.value.trim());
+  saveWorkflow(w);
+  renderWorkflow();
+  scheduleRealtimeSync();
+}
+
+function delCustomWorkflowStep(i, evt){
+  if(evt) evt.stopPropagation();
+  var w = getWorkflow();
+  var key = 'custom_'+workflowPhase;
+  if(!w[key]) return;
+  w[key].splice(i, 1);
+  // 同时删除完成状态
+  if(w[workflowPhase]) delete w[workflowPhase]['custom_'+i];
+  saveWorkflow(w);
+  renderWorkflow();
   scheduleRealtimeSync();
 }
 
