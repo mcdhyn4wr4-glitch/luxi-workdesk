@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="鹿系工作台">
-<meta name="theme-color" content="#7B6B5E">
+<meta name="theme-color" content="#6B5A48">
 <title>鹿系工作台</title>
 <style>
 /* ==================== 全局重置 ==================== */
@@ -2687,7 +2687,22 @@ function checkSyncStatus(){
 
 /* ==================== 初始化 ==================== */
 document.getElementById('topDate').textContent = formatDate();
-// 0. 自动恢复登录状态和实时同步
+// 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
+(function checkVersion(){
+  var CURRENT_VERSION = '3.1';
+  var saved = DB.get('app_version', '');
+  if(saved && saved !== CURRENT_VERSION){
+    DB.set('app_version', CURRENT_VERSION);
+    // 强制从服务器重新加载
+    if(location.search.indexOf('nocache') === -1){
+      location.href = location.pathname + '?nocache=' + Date.now();
+      return;
+    }
+  }
+  DB.set('app_version', CURRENT_VERSION);
+})();
+
+// 0.5 自动恢复登录状态和实时同步
 (function initSync(){
   // 有内置token保底，永远自动开启实时同步
   DB.set('gh_token', getGHToken());
