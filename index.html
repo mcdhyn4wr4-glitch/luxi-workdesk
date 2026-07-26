@@ -579,6 +579,11 @@ button{cursor:pointer}
         <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
         <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
       </div>
+      <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
+        <div class="subtab active" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('all',event)">选题库</div>
+        <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('done',event)">已完成</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text-light);align-self:center" id="topicCount"></div>
+      </div>
       <div id="topicsContainer"></div>
     </div>
 
@@ -1024,6 +1029,7 @@ var STATUS_LIST = [
 
 var ACCOUNTS = ['luxe','home','slow'];
 var currentAccount = 'luxe';
+var currentTopicFilter = 'all'; // all / done
 var currentPage = 'plan';
 
 /* ==================== 页面切换 ==================== */
@@ -1112,10 +1118,22 @@ applyTheme();
 
 function switchAccount(acc, evt){
   currentAccount = acc;
-  document.querySelectorAll('.subtab').forEach(function(t){ t.classList.remove('active'); });
+  // 只清账号tab的active
+  var accTabs = document.querySelectorAll('.subtabs .subtab');
+  accTabs.forEach(function(t){ t.classList.remove('active'); });
   var e = evt || window.event;
   if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
-  else { var subs = document.querySelectorAll('.subtab'); var idx = ['luxe','home','slow'].indexOf(acc); if(idx>=0 && subs[idx]) subs[idx].classList.add('active'); }
+  else { var idx = ['luxe','home','slow'].indexOf(acc); if(idx>=0 && accTabs[idx]) accTabs[idx].classList.add('active'); }
+  renderTopics();
+}
+
+function switchTopicFilter(filter, evt){
+  currentTopicFilter = filter;
+  // 只清筛选tab的active
+  var filterTabs = document.querySelectorAll('#page-topics > div[style*="display:flex"] .subtab');
+  filterTabs.forEach(function(t){ t.classList.remove('active'); });
+  var e = evt || window.event;
+  if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
   renderTopics();
 }
 
@@ -1337,7 +1355,7 @@ function renderTopics(){
 
   // 账号信息
   html += '<div class="card" style="background:'+acc.color+';border:none">'+
-    '<div style="font-size:16px;font-weight:600">'+acc.name+'</div>'+
+    '<div style="font-size:16px;font-weight:var(--fw-semibold)">'+acc.name+'</div>'+
     '<div style="font-size:12px;color:var(--text-light);margin-top:2px">'+acc.desc+'</div></div>';
 
   // 统计进度
@@ -1345,24 +1363,55 @@ function renderTopics(){
   var doneCount = 0;
   accTopics.forEach(function(t, i){ if(statuses[currentAccount+'_'+i] === 'done' || statuses[currentAccount+'_'+i] === 'review') doneCount++; });
   var pct = Math.round(doneCount/accTopics.length*100);
-  html += '<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px"><span>选题完成进度</span><span style="font-weight:600">'+doneCount+'/'+accTopics.length+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+  html += '<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px"><span>选题完成进度</span><span style="font-weight:var(--fw-semibold)">'+doneCount+'/'+accTopics.length+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+
+  // 更新计数显示
+  var countEl = document.getElementById('topicCount');
+  if(countEl){
+    if(currentTopicFilter === 'done'){
+      countEl.textContent = '已完成 '+doneCount+' 个';
+    } else {
+      countEl.textContent = '共 '+accTopics.length+' 个';
+    }
+  }
 
   // 按方向分组
+  var hasContent = false;
   acc.directions.forEach(function(dir, di){
-    html += '<div class="section-label">'+dir.icon+' '+dir.name+' <span style="color:var(--text-muted);font-weight:var(--fw-regular)">· '+dir.desc+'</span></div>';
+    // 先收集这个方向下符合筛选的选题
+    var filteredTopics = [];
     accTopics.forEach(function(t, i){
       if(t.d !== di) return;
       var stKey = currentAccount+'_'+i;
       var st = statuses[stKey] || 'idea';
-      var stObj = STATUS_LIST.find(function(s){ return s.v === st; });
-      html += '<div class="topic-item" onclick="cycleStatus(\''+stKey+'\')">'+
-        '<div class="topic-head"><div class="topic-title">'+t.t+'</div><div class="topic-status '+stObj.cls+'">'+stObj.icon+'</div></div>'+
-        '<div class="topic-meta"><span class="tag tag-'+t.tag+'">'+TAG_MAP[t.tag]+'</span></div>'+
-        '<div class="topic-platforms"><span>🎬 '+t.dy+'</span><span>📕 '+t.xhs+'</span></div>'+
+      if(currentTopicFilter === 'done'){
+        if(st === 'done' || st === 'review') filteredTopics.push({t:t, i:i, st:st});
+      } else {
+        filteredTopics.push({t:t, i:i, st:st});
+      }
+    });
+    if(filteredTopics.length === 0) return;
+    hasContent = true;
+
+    html += '<div class="section-label">'+dir.icon+' '+dir.name+' <span style="color:var(--text-muted);font-weight:var(--fw-regular)">· '+dir.desc+'</span></div>';
+    filteredTopics.forEach(function(item){
+      var stObj = STATUS_LIST.find(function(s){ return s.v === item.st; });
+      html += '<div class="topic-item" onclick="cycleStatus(\''+currentAccount+'_'+item.i+'\')">'+
+        '<div class="topic-head"><div class="topic-title">'+item.t.t+'</div><div class="topic-status '+stObj.cls+'">'+stObj.icon+'</div></div>'+
+        '<div class="topic-meta"><span class="tag tag-'+item.t.tag+'">'+TAG_MAP[item.t.tag]+'</span></div>'+
+        '<div class="topic-platforms"><span>🎬 '+item.t.dy+'</span><span>📕 '+item.t.xhs+'</span></div>'+
         '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">点击切换状态 → '+stObj.label+'</div>'+
         '</div>';
     });
   });
+
+  if(!hasContent){
+    if(currentTopicFilter === 'done'){
+      html += '<div class="empty"><span class="empty-icon">🎉</span><div class="empty-text">还没有完成的选题</div><div class="empty-hint">把选题标记为「已发」后会出现在这里</div></div>';
+    } else {
+      html += '<div class="empty"><span class="empty-icon">📚</span><div class="empty-text">选题库是空的</div></div>';
+    }
+  }
 
   document.getElementById('topicsContainer').innerHTML = html;
 }
