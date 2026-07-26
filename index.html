@@ -1953,11 +1953,22 @@ function scheduleRealtimeSync(){
 }
 
 function getGHToken(){
+  // 1. 优先从URL锚点读取（最稳定，iOS清不掉）
+  var hash = window.location.hash || '';
+  if(hash.indexOf('token=') === 1){
+    var token = hash.slice(7); // 去掉 #token=
+    if(token) return token;
+  }
+  // 2. 其次从localStorage读取
   return DB.get('gh_token', '');
 }
 
 function setGHToken(token){
   DB.set('gh_token', token);
+  // 同时更新URL锚点，保证刷新后还在
+  if(token && window.location.hash.indexOf('token=') !== 1){
+    window.location.hash = 'token=' + token;
+  }
 }
 
 function saveToken(){
@@ -2150,6 +2161,17 @@ function checkSyncStatus(){
 
 /* ==================== 初始化 ==================== */
 document.getElementById('topDate').textContent = formatDate();
+// 0. 如果URL里带了token（桌面图标专用网址），自动恢复登录状态
+(function initFromURL(){
+  var hash = window.location.hash || '';
+  if(hash.indexOf('token=') === 1){
+    var urlToken = hash.slice(7);
+    if(urlToken){
+      DB.set('gh_token', urlToken);
+      DB.set('realtime_sync', true); // 自动开启实时同步
+    }
+  }
+})();
 // 1. 先用本地数据立即渲染（保证页面秒开）
 renderWorkflow();
 renderDaily();
