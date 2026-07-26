@@ -2127,6 +2127,7 @@ function checkSyncStatus(){
 
 /* ==================== 初始化 ==================== */
 document.getElementById('topDate').textContent = formatDate();
+// 1. 先用本地数据立即渲染（保证页面秒开）
 renderWorkflow();
 renderDaily();
 renderPlan();
@@ -2135,7 +2136,46 @@ renderIdeas();
 renderLife();
 renderOverview();
 checkTokenExists();
-if(getGHToken()){ checkSyncStatus(); }
+// 2. 如果有token，后台静默拉取云端最新数据，拉到就自动刷新
+if(getGHToken()){
+  checkSyncStatus();
+  // 开机自动拉取（静默，不弹toast）
+  setTimeout(function(){ autoPullOnLoad(); }, 500);
+}
+
+// 打开时静默拉取云端数据
+function autoPullOnLoad(){
+  if(!getGHToken()) return;
+  // 如果有等待上传的数据（实时同步防抖中），跳过自动拉取，避免覆盖未上传的改动
+  if(realtimeSyncTimer){ return; }
+  fetch(SYNC_API, {
+    method: 'GET',
+    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+  }).then(function(r){
+    if(r.status === 404) return null; // 云端没数据，用本地
+    if(!r.ok) return null;
+    return r.json();
+  }).then(function(result){
+    if(!result || !result.content) return; // 云端没数据，保持本地
+    try {
+      var cloudData = JSON.parse(decodeURIComponent(escape(atob(result.content.replace(/\n/g,'')))));
+      var localData = getAllLocalData();
+      var localKeys = Object.keys(localData).length;
+      var cloudKeys = Object.keys(cloudData).length;
+      // 云端数据条数 >= 本地，才拉取覆盖（避免本地新数据被旧云端覆盖）
+      if(cloudKeys >= localKeys){
+        restoreLocalData(cloudData);
+        renderWorkflow(); renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
+        var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+        setSyncStatus('✅ 已自动同步 · ' + time + ' · 实时同步中', 'var(--green)');
+      }
+    } catch(e){
+      console.log('自动拉取解析失败:', e);
+    }
+  }).catch(function(err){
+    // 网络错误，保持本地数据，不提示
+  });
+}
 </script>
 </body>
 </html>
