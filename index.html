@@ -11,25 +11,87 @@
 <style>
 /* ==================== 全局重置 ==================== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:15px;color:#2c2c2c;background:#f5f3f0;-webkit-font-smoothing:antialiased}
+html{transition:background-color var(--duration-slow) var(--ease-out)}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Segoe UI",sans-serif;font-size:15px;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;transition:color var(--duration-slow) var(--ease-out),background var(--duration-slow) var(--ease-out)}
 input,textarea,select,button{font-family:inherit;font-size:inherit;color:inherit;border:none;outline:none;background:none}
 button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary-400);outline-offset:2px}
+
+/* SVG图标 */
+.icon{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-sm{width:16px;height:16px}
+.icon-lg{width:24px;height:24px}
+
 :root{
-  --primary:#7B6B5E;
-  --primary-light:#A89B8E;
-  --primary-bg:#F0EBE3;
-  --accent:#C97B5E;
-  --bg:#f5f3f0;
-  --card:#ffffff;
-  --text:#2c2c2c;
-  --text-light:#9a9a9a;
-  --text-mid:#6a6a6a;
-  --border:#e8e4de;
-  --border-light:#f0ede8;
-  --green:#6B9B7E;
-  --pink:#D4847A;
-  --blue:#7B9EB5;
-  --sidebar-w:60px;
+  /* 主色系：深暖棕 */
+  --primary-900:#3A2F26; --primary-800:#4A3D30; --primary-700:#5A4A3A;
+  --primary:#6B5A48; --primary-500:#7B6B58; --primary-400:#8A7A65;
+  --primary-300:#A09180; --primary-200:#C4B8A8; --primary-100:#E0D6C8;
+  --primary-50:#EDE6D9; --primary-bg:#EDE6D9;
+  --primary-light:#A09180;
+  /* 强调色：橘红 */
+  --accent-900:#7A3D2B; --accent-700:#9A5238; --accent:#B86A4A;
+  --accent-300:#D89A7A; --accent-100:#F8E8E0;
+  /* 语义色 */
+  --green-700:#3A6B4E; --green:#5A8A6E; --green-300:#82B096; --green-100:#DDEAE0;
+  --pink-700:#A05048; --pink:#C47068; --pink-300:#D8A098; --pink-100:#F0E0DC;
+  --blue-700:#4A6A80; --blue:#6A8AA0; --blue-300:#92AEC0; --blue-100:#DEE8F0;
+  --amber:#D89838; --amber-100:#F8E8CC;
+  /* 中性 */
+  --bg:#EDE8E0; --bg-elevated:#FFFFFF; --bg-subtle:#E4DDD2;
+  --card:#FFFFFF; --card-hover:#F8F5F0;
+  --text:#2A2520; --text-mid:#5A4F48; --text-light:#8A8078; --text-muted:#B8AFA5;
+  --border:#D8D0C4; --border-light:#E8E2D6; --border-focus:#8A7A65;
+  --surface-tint:rgba(107,90,72,0.05);
+  /* 间距 */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-7:28px; --space-8:32px;
+  --space-10:40px; --space-12:48px; --space-16:64px;
+  /* 圆角 */
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:18px;
+  --radius-2xl:24px; --radius-full:9999px;
+  /* 阴影 */
+  --shadow-sm:0 1px 3px rgba(58,47,38,0.08);
+  --shadow-md:0 2px 8px rgba(58,47,38,0.10),0 1px 2px rgba(58,47,38,0.04);
+  --shadow-lg:0 6px 20px rgba(58,47,38,0.12),0 2px 6px rgba(58,47,38,0.06);
+  --shadow-xl:0 10px 40px rgba(58,47,38,0.16),0 4px 12px rgba(58,47,38,0.08);
+  --shadow-inner:inset 0 1px 3px rgba(58,47,38,0.08);
+  --shadow-focus:0 0 0 3px rgba(107,90,72,0.20);
+  --shadow-card:0 1px 3px rgba(58,47,38,0.06),0 1px 2px rgba(58,47,38,0.03);
+  /* 侧边栏 */
+  --sidebar-w:64px; --sidebar-w-wide:160px;
+  /* 动画 */
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --duration-fast:150ms; --duration-normal:250ms; --duration-slow:400ms;
+  --fw-regular:400; --fw-medium:500; --fw-semibold:600; --fw-bold:700;
+}
+
+/* 暗色模式 */
+[data-theme="dark"]{
+  --primary-900:#2A2218; --primary-800:#3A2F26; --primary-700:#4A3D30;
+  --primary:#988870; --primary-500:#B0A088; --primary-400:#C4B498;
+  --primary-300:#D8CAB0; --primary-200:#E0D6C8; --primary-100:#2A2418;
+  --primary-50:#1E1810; --primary-bg:#2A2418;
+  --primary-light:#D8CAB0;
+  --accent-900:#5A2D20; --accent-700:#7A3D2B; --accent:#D89A7A;
+  --accent-300:#B86A4A; --accent-100:#2E2218;
+  --green-700:#5A8A6E; --green:#82B096; --green-300:#A0C4B0; --green-100:#1A2818;
+  --pink-700:#C47068; --pink:#D8A098; --pink-300:#E8B8B0; --pink-100:#281818;
+  --blue-700:#6A8AA0; --blue:#92AEC0; --blue-300:#B0C8D8; --blue-100:#182028;
+  --amber:#E8B850; --amber-100:#2A2010;
+  --bg:#151210; --bg-elevated:#1E1A16; --bg-subtle:#282220;
+  --card:#221E18; --card-hover:#2C2820;
+  --text:#E0D6C8; --text-mid:#B0A898; --text-light:#807068; --text-muted:#504838;
+  --border:#382E24; --border-light:#282220; --border-focus:#988870;
+  --surface-tint:rgba(152,136,112,0.06);
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.20);
+  --shadow-md:0 2px 8px rgba(0,0,0,0.28),0 1px 2px rgba(0,0,0,0.12);
+  --shadow-lg:0 6px 20px rgba(0,0,0,0.36),0 2px 6px rgba(0,0,0,0.18);
+  --shadow-xl:0 10px 40px rgba(0,0,0,0.44),0 4px 12px rgba(0,0,0,0.22);
+  --shadow-inner:inset 0 1px 3px rgba(0,0,0,0.24);
+  --shadow-focus:0 0 0 3px rgba(152,136,112,0.28);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.16),0 1px 2px rgba(0,0,0,0.10);
 }
 
 /* ==================== 整体布局 ==================== */
@@ -37,36 +99,39 @@ button{cursor:pointer}
 
 /* ==================== 左侧边栏 ==================== */
 .sidebar{
-  width:var(--sidebar-w);
-  flex-shrink:0;
-  background:#fff;
-  border-right:1px solid var(--border-light);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:calc(env(safe-area-inset-top) + 16px) 0 calc(env(safe-area-inset-bottom) + 16px);
-  z-index:10;
+  width:var(--sidebar-w);flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border-light);display:flex;flex-direction:column;
+  align-items:center;padding:calc(env(safe-area-inset-top) + var(--space-4)) var(--space-2) calc(env(safe-area-inset-bottom) + var(--space-4));
+  z-index:10;box-shadow:var(--shadow-sm);
 }
 .sidebar-logo{
-  width:36px;height:36px;border-radius:10px;
-  background:var(--primary);
+  width:40px;height:40px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--primary),var(--primary-700));
   display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:16px;font-weight:700;
-  margin-bottom:24px;letter-spacing:0;
+  color:var(--card);font-size:18px;font-weight:700;margin-bottom:var(--space-6);
+  box-shadow:var(--shadow-md);transition:transform var(--duration-normal) var(--ease-spring);
 }
-.sidebar-nav{display:flex;flex-direction:column;gap:4px;width:100%;align-items:center;flex:1}
+.sidebar-logo:active{transform:scale(0.92)}
+.sidebar-nav{display:flex;flex-direction:column;gap:var(--space-2);width:100%;align-items:center;flex:1}
 .nav-item{
-  width:46px;height:46px;border-radius:11px;
+  width:48px;height:48px;border-radius:var(--radius-lg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  color:var(--text-light);transition:all .2s;position:relative;
+  color:var(--text-light);transition:all var(--duration-normal) var(--ease-out);position:relative;cursor:pointer;
 }
-.nav-item .nav-icon{font-size:18px;line-height:1}
-.nav-item .nav-label{font-size:9px;letter-spacing:.5px}
-.nav-item:active{background:var(--border-light)}
-.nav-item.active{color:var(--primary);background:var(--primary-bg)}
+.nav-item .nav-icon{display:flex;align-items:center;justify-content:center}
+.nav-item .nav-icon svg{width:20px;height:20px}
+.nav-item .nav-label{font-size:10px;letter-spacing:0.5px;font-weight:var(--fw-medium)}
+.nav-item:hover{background:var(--surface-tint);color:var(--text-mid)}
+.nav-item:active{transform:scale(0.95);background:var(--primary-bg)}
+.nav-item.active{color:var(--primary);background:var(--primary-bg);box-shadow:var(--shadow-sm)}
 .nav-item.active::before{
-  content:'';position:absolute;left:0px;top:50%;transform:translateY(-50%);
-  width:3px;height:18px;background:var(--primary);border-radius:0 2px 2px 0;
+  content:'';position:absolute;left:-4px;top:50%;transform:translateY(-50%);
+  width:4px;height:20px;background:var(--primary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  transition:height var(--duration-normal) var(--ease-spring);
+}
+.sidebar-footer{
+  width:100%;display:flex;flex-direction:column;gap:var(--space-2);
+  align-items:center;padding-top:var(--space-4);border-top:1px solid var(--border-light);margin-top:var(--space-3);
 }
 
 /* ==================== 主区域 ==================== */
@@ -74,245 +139,301 @@ button{cursor:pointer}
 
 /* 顶部栏 */
 .topbar{
-  padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;
+  padding:calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) var(--space-3);
   flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;
+  background:var(--card);border-bottom:1px solid var(--border-light);
 }
-.topbar h1{font-size:20px;font-weight:700;letter-spacing:.5px;color:var(--text)}
-.topbar .top-date{font-size:12px;color:var(--text-light);font-weight:400}
+.topbar-left{display:flex;flex-direction:column;gap:var(--space-1)}
+.topbar h1{font-size:20px;font-weight:var(--fw-bold);letter-spacing:0.3px;color:var(--text)}
+.topbar-progress{display:flex;align-items:center;gap:var(--space-2);font-size:11px;color:var(--text-light)}
+.topbar-progress-bar{width:80px;height:4px;background:var(--border);border-radius:var(--radius-full);overflow:hidden}
+.topbar-progress-fill{height:100%;background:linear-gradient(90deg,var(--green-700),var(--green));border-radius:var(--radius-full);transition:width var(--duration-slow) var(--ease-out)}
+.topbar-right{display:flex;align-items:center;gap:var(--space-2)}
+.topbar .top-date{font-size:12px;color:var(--text-light);font-weight:var(--fw-regular)}
+.topbar-dark-btn{
+  width:32px;height:32px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:all var(--duration-fast) var(--ease-out);color:var(--text-light);
+}
+.topbar-dark-btn:hover{background:var(--surface-tint)}
+.topbar-dark-btn:active{transform:scale(0.92)}
+.topbar-dark-btn svg{width:18px;height:18px}
 
 /* 内容区 */
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 18px calc(env(safe-area-inset-bottom) + 24px)}
-.page{display:none !important;animation:fadeIn .3s ease}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--space-2) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-6));background:var(--bg)}
+.page{display:none !important;animation:fadeIn var(--duration-slow) var(--ease-out)}
 .page.active{display:block !important}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardEnter{from{opacity:0;transform:translateY(16px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes checkPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes ideaEnter{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes numPop{0%{transform:scale(0.8);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes emptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
 /* ==================== 通用组件 ==================== */
 .card{
-  background:var(--card);
-  border-radius:16px;
-  padding:18px 16px;
-  margin-bottom:12px;
-  border:1px solid var(--border-light);
+  background:var(--card);border-radius:var(--radius-xl);
+  padding:var(--space-5) var(--space-4);margin-bottom:var(--space-3);
+  border:1px solid var(--border-light);box-shadow:var(--shadow-card);
+  transition:all var(--duration-normal) var(--ease-out);
+  animation:cardEnter var(--duration-slow) var(--ease-out);
 }
+.card:hover{box-shadow:var(--shadow-md);border-color:var(--border)}
 .card-title{
-  font-size:14px;font-weight:600;margin-bottom:14px;
-  color:var(--text);display:flex;align-items:center;gap:7px;
-  letter-spacing:.3px;
+  font-size:14px;font-weight:var(--fw-semibold);margin-bottom:var(--space-4);
+  color:var(--text);display:flex;align-items:center;gap:var(--space-2);letter-spacing:0.2px;
 }
 .card-title .emoji{font-size:16px}
+.card-title .icon-wrap{display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.card-title .icon-wrap svg{width:18px;height:18px}
+.card-primary{
+  border:1.5px solid var(--primary-300);
+  background:linear-gradient(180deg,var(--primary-50),var(--card));
+  box-shadow:var(--shadow-md);
+}
+.card-primary:hover{box-shadow:var(--shadow-lg)}
+.card-highlight{
+  border:2px solid var(--accent-300);
+  background:linear-gradient(180deg,var(--accent-100),var(--card));
+  box-shadow:var(--shadow-lg);position:relative;
+}
+.card-highlight:hover{box-shadow:var(--shadow-xl)}
+
+/* 可折叠卡片 */
+.card-collapsible .card-title{cursor:pointer;margin-bottom:0;transition:margin var(--duration-normal)}
+.card-collapsible.expanded .card-title{margin-bottom:var(--space-4)}
+.card-collapsible .card-body{max-height:0;overflow:hidden;transition:max-height var(--duration-slow) var(--ease-out),opacity var(--duration-normal) var(--ease-out);opacity:0}
+.card-collapsible.expanded .card-body{max-height:3000px;opacity:1}
+.card-collapse-arrow{margin-left:auto;transition:transform var(--duration-normal) var(--ease-out);color:var(--text-light)}
+.card-collapse-arrow svg{width:18px;height:18px}
+.card-collapsible.expanded .card-collapse-arrow{transform:rotate(180deg)}
+
 .section-label{
-  font-size:11px;color:var(--text-light);
-  margin:20px 0 10px;font-weight:600;letter-spacing:1px;
-  text-transform:uppercase;
+  font-size:11px;color:var(--text-light);margin:var(--space-5) 0 var(--space-3);
+  font-weight:var(--fw-semibold);letter-spacing:1px;text-transform:uppercase;
 }
 
 /* 输入框 */
 .input,.textarea{
   width:100%;background:var(--bg);border:1px solid var(--border);
-  border-radius:10px;padding:11px 13px;font-size:14px;transition:all .2s;
+  border-radius:var(--radius-md);padding:var(--space-3);font-size:14px;
+  transition:all var(--duration-normal) var(--ease-out);box-shadow:var(--shadow-inner);
 }
-.input:focus,.textarea:focus{border-color:var(--primary-light);background:#fff}
+.input:focus,.textarea:focus{border-color:var(--border-focus);background:var(--card);box-shadow:var(--shadow-focus)}
 .textarea{resize:none;min-height:60px;line-height:1.6}
-.input::placeholder,.textarea::placeholder{color:#c5c5c5}
+.input::placeholder,.textarea::placeholder{color:var(--text-muted)}
 
 /* 按钮 */
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:4px;
-  padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--space-1);
+  padding:var(--space-3) var(--space-5);border-radius:var(--radius-md);
+  font-size:14px;font-weight:var(--fw-medium);transition:all var(--duration-fast) var(--ease-out);
+  position:relative;overflow:hidden;
 }
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:active{transform:scale(.97);opacity:.88}
-.btn-outline{border:1px solid var(--border);color:var(--text-mid);background:#fff}
-.btn-outline:active{background:var(--bg)}
-.btn-sm{padding:6px 14px;font-size:13px;border-radius:8px}
+.btn-primary{background:var(--primary);color:var(--card);box-shadow:var(--shadow-sm)}
+.btn-primary:hover{background:var(--primary-700);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0) scale(0.97);box-shadow:var(--shadow-sm)}
+.btn-secondary{border:1px solid var(--border);color:var(--text-mid);background:var(--card)}
+.btn-secondary:hover{border-color:var(--primary-400);color:var(--text);background:var(--primary-50)}
+.btn-secondary:active{background:var(--bg);transform:scale(0.97)}
+.btn-ghost{color:var(--text-mid);background:transparent;border:none}
+.btn-ghost:hover{color:var(--text);background:var(--surface-tint)}
+.btn-ghost:active{background:var(--primary-50);transform:scale(0.97)}
+.btn-outline{border:1px solid var(--border);color:var(--text-mid);background:var(--card)}
+.btn-outline:hover{border-color:var(--primary-400);background:var(--primary-50)}
+.btn-outline:active{background:var(--bg);transform:scale(0.97)}
+.btn-sm{padding:var(--space-2) var(--space-3);font-size:13px;border-radius:var(--radius-sm)}
 .btn-block{display:flex;width:100%}
 
 /* 标签 */
-.tag{display:inline-block;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;margin-right:5px}
-.tag-product{background:#FDF0EC;color:var(--accent)}
-.tag-daily{background:#EAF3EE;color:var(--green)}
-.tag-skill{background:#EBF1F5;color:var(--blue)}
-.tag-view{background:#F5EDF2;color:var(--pink)}
-.tag-interact{background:#F5F0E6;color:#B8956B}
+.tag{display:inline-flex;align-items:center;gap:var(--space-1);padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);font-size:11px;font-weight:var(--fw-medium);margin-right:var(--space-1);transition:all var(--duration-fast)}
+.tag:hover{transform:scale(1.03)}
+.tag-product{background:var(--accent-100);color:var(--accent-700)}
+.tag-daily{background:var(--green-100);color:var(--green-700)}
+.tag-skill{background:var(--blue-100);color:var(--blue-700)}
+.tag-view{background:var(--pink-100);color:var(--pink-700)}
+.tag-interact{background:var(--primary-50);color:var(--primary-500)}
 
 /* 选题卡片 */
 .topic-item{
-  background:var(--bg);border-radius:12px;padding:13px 14px;margin-bottom:8px;
-  border:1px solid var(--border-light);transition:all .2s;
+  background:var(--bg);border-radius:var(--radius-lg);padding:var(--space-3);
+  margin-bottom:var(--space-2);border:1px solid var(--border-light);
+  transition:all var(--duration-normal) var(--ease-out);box-shadow:var(--shadow-sm);
 }
-.topic-item:active{border-color:var(--primary-light);background:#fff}
-.topic-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.topic-title{font-size:14px;font-weight:500;line-height:1.45;flex:1;color:var(--text)}
-.topic-status{font-size:18px;flex-shrink:0;line-height:1}
-.topic-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.topic-desc{font-size:12px;color:var(--text-light);margin-top:6px;line-height:1.5}
-.topic-platforms{display:flex;gap:8px;margin-top:8px;font-size:11px;color:var(--text-light)}
+.topic-item:hover{border-color:var(--primary-300);box-shadow:var(--shadow-md)}
+.topic-item:active{border-color:var(--primary);background:var(--card);transform:scale(0.98)}
+.topic-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-2);margin-bottom:var(--space-2)}
+.topic-title{font-size:14px;font-weight:var(--fw-medium);line-height:1.45;flex:1;color:var(--text)}
+.topic-status{font-size:18px;flex-shrink:0;line-height:1;display:flex;align-items:center}
+.topic-meta{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-2)}
+.topic-desc{font-size:12px;color:var(--text-light);margin-top:var(--space-2);line-height:1.5}
+.topic-platforms{display:flex;gap:var(--space-2);margin-top:var(--space-2);font-size:11px;color:var(--text-light)}
 .topic-platforms span{display:flex;align-items:center;gap:3px}
 
 /* 状态颜色 */
-.st-idea{color:#ccc}
+.st-idea{color:var(--text-muted)}
 .st-script{color:var(--blue)}
-.st-shoot{color:#E8A838}
+.st-shoot{color:var(--amber)}
 .st-done{color:var(--green)}
 .st-review{color:var(--pink)}
 
 /* 子Tab */
-.subtabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
-.subtab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;background:#fff;border:1px solid var(--border);color:var(--text-light);transition:all .2s}
-.subtab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.subtabs{display:flex;gap:var(--space-2);margin-bottom:var(--space-4);overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:var(--space-1)}
+.subtab{padding:var(--space-2) var(--space-4);border-radius:var(--radius-full);font-size:13px;font-weight:var(--fw-medium);white-space:nowrap;background:var(--card);border:1px solid var(--border);color:var(--text-light);transition:all var(--duration-normal) var(--ease-out)}
+.subtab:hover{border-color:var(--primary-400);color:var(--text-mid)}
+.subtab.active{background:var(--primary);color:var(--card);border-color:var(--primary);box-shadow:var(--shadow-sm)}
 
 /* 每日计划 */
-.todo-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border-light)}
+.todo-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--border-light)}
 .todo-item:last-child{border-bottom:none}
-.todo-check{width:22px;height:22px;border-radius:50%;border:2px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px;color:#fff}
-.todo-check.done{background:var(--green);border-color:var(--green)}
+.todo-check{width:24px;height:24px;border-radius:var(--radius-full);border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all var(--duration-normal) var(--ease-spring);font-size:12px;color:transparent}
+.todo-check:hover{border-color:var(--primary-400)}
+.todo-check.done{background:var(--green);border-color:var(--green);box-shadow:0 2px 8px rgba(90,138,110,0.25);animation:checkPop var(--duration-normal) var(--ease-spring);color:var(--card)}
+.todo-check.done svg{width:14px;height:14px;stroke:var(--card);fill:none;stroke-width:3}
 .todo-text{flex:1;font-size:14px;line-height:1.4}
-.todo-text.done{color:#bbb;text-decoration:line-through}
-.todo-del{font-size:16px;color:#ddd;padding:4px;flex-shrink:0}
+.todo-text.done{color:var(--text-muted);text-decoration:line-through}
+.todo-del{font-size:16px;color:var(--text-muted);padding:var(--space-1);flex-shrink:0;transition:color var(--duration-fast)}
+.todo-del:hover{color:var(--pink)}
 
 /* 发布追踪表 */
 .track-table{width:100%;border-collapse:collapse;font-size:13px}
-.track-table th{text-align:left;font-weight:500;color:var(--text-light);padding:6px 4px;border-bottom:1px solid var(--border);font-size:11px}
-.track-table td{padding:8px 4px;border-bottom:1px solid var(--border-light)}
-.track-table select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px}
+.track-table th{text-align:left;font-weight:var(--fw-medium);color:var(--text-light);padding:var(--space-2) 0;border-bottom:1px solid var(--border);font-size:11px}
+.track-table td{padding:var(--space-2) 0;border-bottom:1px solid var(--border-light)}
+.track-table select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 6px;font-size:12px}
 
 /* 灵感记录 */
-.idea-item{background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px;border:1px solid var(--border-light);border-left:3px solid var(--primary-light)}
-.idea-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.idea-item{
+  background:var(--bg);border-radius:var(--radius-lg);padding:var(--space-4);
+  margin-bottom:var(--space-2);border:1px solid var(--border-light);
+  border-left:3px solid var(--primary-300);transition:all var(--duration-normal) var(--ease-out);
+  animation:ideaEnter var(--duration-normal) var(--ease-out);
+}
+.idea-item:hover{border-left-color:var(--primary);box-shadow:var(--shadow-md)}
+.idea-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)}
 .idea-date{font-size:11px;color:var(--text-light)}
-.idea-account{font-size:11px;padding:2px 8px;border-radius:5px;background:var(--primary-bg);color:var(--primary)}
+.idea-account{font-size:11px;padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary)}
 .idea-content{font-size:14px;line-height:1.5}
-.idea-del{font-size:14px;color:#ddd;padding:2px}
+.idea-del{font-size:14px;color:var(--text-muted);padding:2px}
 
 /* 生活记录 */
-.mood-picker{display:flex;gap:10px;margin:10px 0}
-.mood{font-size:26px;opacity:.4;transition:all .2s;cursor:pointer}
-.mood.selected{opacity:1;transform:scale(1.2)}
+.mood-picker{display:flex;gap:var(--space-3);margin:var(--space-3) 0}
+.mood{font-size:28px;opacity:0.35;transition:all var(--duration-normal) var(--ease-spring);cursor:pointer}
+.mood:hover{opacity:0.6;transform:scale(1.1)}
+.mood.selected{opacity:1;transform:scale(1.25)}
 
 /* 总览 */
-.overview-account{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:12px;margin-bottom:8px;border:1px solid var(--border-light)}
-.overview-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.overview-account{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);background:var(--bg);border-radius:var(--radius-lg);margin-bottom:var(--space-2);border:1px solid var(--border-light);transition:all var(--duration-normal) var(--ease-out)}
+.overview-account:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.overview-avatar{width:44px;height:44px;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:var(--shadow-sm)}
+.overview-avatar svg{width:22px;height:22px;stroke-width:2}
 .overview-info{flex:1}
-.overview-name{font-size:15px;font-weight:600}
+.overview-name{font-size:15px;font-weight:var(--fw-semibold)}
 .overview-desc{font-size:12px;color:var(--text-light);margin-top:2px}
 
 /* 数据条 */
-.data-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px}
+.data-row{display:flex;justify-content:space-between;padding:var(--space-2) 0;border-bottom:1px solid var(--border-light);font-size:13px}
 .data-row:last-child{border:none}
 .data-label{color:var(--text-light)}
-.data-val{font-weight:500}
+.data-val{font-weight:var(--fw-medium)}
 
 /* 空状态 */
-.empty{text-align:center;padding:30px 0;color:#ccc;font-size:14px}
+.empty{text-align:center;padding:var(--space-8) var(--space-4);color:var(--text-light);font-size:14px}
+.empty-icon{font-size:48px;display:block;margin-bottom:var(--space-3);opacity:0.5;animation:emptyFloat 3s ease-in-out infinite}
+.empty-text{font-size:14px;color:var(--text-light);margin-bottom:var(--space-2)}
+.empty-hint{font-size:12px;color:var(--text-muted)}
 
 /* 提示条 */
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(44,44,44,.9);color:#fff;padding:9px 22px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;letter-spacing:.5px}
-.toast.show{opacity:1}
+.toast{position:fixed;bottom:var(--space-8);left:50%;transform:translateX(-50%) translateY(20px);background:var(--primary-900);color:var(--card);padding:var(--space-2) var(--space-6);border-radius:var(--radius-full);font-size:13px;z-index:999;opacity:0;transition:all var(--duration-normal) var(--ease-out);pointer-events:none;letter-spacing:0.3px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* 进度条 */
-.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
-.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+.progress-bar{height:6px;background:var(--border);border-radius:var(--radius-full);overflow:hidden;margin-top:var(--space-1)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green-700),var(--green));border-radius:var(--radius-full);transition:width var(--duration-slow) var(--ease-out)}
 
 /* 统计报告 */
-.report-section{margin-bottom:20px}
-.report-section-title{font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:12px;display:flex;align-items:center;gap:5px;letter-spacing:.5px}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat-box{background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border-light)}
-.stat-num{font-size:24px;font-weight:700;color:var(--primary);line-height:1.2;letter-spacing:-.5px}
-.stat-label{font-size:11px;color:var(--text-light);margin-top:3px}
-.stat-box.accent .stat-num{color:var(--accent)}
-.stat-box.green .stat-num{color:var(--green)}
-.stat-box.blue .stat-num{color:var(--blue)}
-.stat-box.pink .stat-num{color:var(--pink)}
-.bar-chart{display:flex;flex-direction:column;gap:7px;margin-top:8px}
-.bar-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.report-section{margin-bottom:var(--space-5)}
+.report-section-title{font-size:12px;font-weight:var(--fw-semibold);color:var(--text-mid);margin-bottom:var(--space-3);display:flex;align-items:center;gap:var(--space-2);letter-spacing:0.5px}
+.report-section-title svg{width:16px;height:16px;color:var(--primary)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.stat-box{background:var(--bg-subtle);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-3);text-align:center;border:1px solid var(--border-light);transition:all var(--duration-normal) var(--ease-out);position:relative}
+.stat-box:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.stat-icon{margin-bottom:var(--space-1);display:flex;align-items:center;justify-content:center}
+.stat-icon svg{width:22px;height:22px}
+.stat-num{font-size:26px;font-weight:var(--fw-bold);color:var(--primary);line-height:1.2;letter-spacing:-0.5px;animation:numPop var(--duration-normal) var(--ease-spring)}
+.stat-label{font-size:11px;color:var(--text-light);margin-top:var(--space-1)}
+.stat-trend{font-size:10px;margin-top:var(--space-1);display:inline-flex;align-items:center;gap:2px}
+.stat-trend-up{color:var(--green)}
+.stat-trend-down{color:var(--pink)}
+.stat-box.accent .stat-num{color:var(--accent-700)}
+.stat-box.accent .stat-icon{color:var(--accent)}
+.stat-box.green .stat-num{color:var(--green-700)}
+.stat-box.green .stat-icon{color:var(--green)}
+.stat-box.blue .stat-num{color:var(--blue-700)}
+.stat-box.blue .stat-icon{color:var(--blue)}
+.stat-box.pink .stat-num{color:var(--pink-700)}
+.stat-box.pink .stat-icon{color:var(--pink)}
+.bar-chart{display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2)}
+.bar-row{display:flex;align-items:center;gap:var(--space-2);font-size:12px}
 .bar-label{width:60px;flex-shrink:0;color:var(--text-light)}
-.bar-track{flex:1;height:20px;background:var(--border);border-radius:5px;overflow:hidden;position:relative}
-.bar-fill{height:100%;border-radius:5px;transition:width .4s;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px;color:#fff;font-weight:600;min-width:24px}
-.pie-row{display:flex;align-items:center;gap:12px;margin-top:8px}
-.pie-legend{display:flex;flex-direction:column;gap:5px;flex:1}
-.pie-item{display:flex;align-items:center;gap:6px;font-size:12px}
-.pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.report-summary{background:var(--primary-bg);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.7;color:var(--text);margin-top:12px}
-.report-empty{text-align:center;padding:24px 0;color:#ccc;font-size:13px}
+.bar-track{flex:1;height:20px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:var(--radius-sm);transition:width var(--duration-slow) var(--ease-out);display:flex;align-items:center;justify-content:flex-end;padding-right:var(--space-1);font-size:10px;color:var(--card);font-weight:var(--fw-semibold);min-width:24px}
+.pie-row{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-2)}
+.pie-legend{display:flex;flex-direction:column;gap:var(--space-1);flex:1}
+.pie-item{display:flex;align-items:center;gap:var(--space-1);font-size:12px}
+.pie-dot{width:10px;height:10px;border-radius:var(--radius-full);flex-shrink:0}
+.report-summary{background:var(--primary-bg);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);font-size:13px;line-height:1.7;color:var(--text);margin-top:var(--space-3)}
+.report-empty{text-align:center;padding:var(--space-6) 0;color:var(--text-muted);font-size:13px}
 
 /* 页面标题副文字 */
-.page-subtitle{text-align:center;margin-bottom:18px}
+.page-subtitle{text-align:center;margin-bottom:var(--space-5)}
 .page-subtitle .date-text{font-size:12px;color:var(--text-light);letter-spacing:1px}
 
 /* ==================== 响应式：电脑宽屏布局 ==================== */
 @media screen and (min-width: 768px){
-  /* 取消宽度限制，撑满屏幕 */
   #app{max-width:none;height:100vh}
-  
-  /* 侧边栏加宽，显示完整文字 */
-  .sidebar{width:140px;padding-top:24px}
-  .sidebar-logo{width:44px;height:44px;font-size:20px;margin-bottom:28px}
-  .sidebar-nav{align-items:stretch;padding:0 12px;gap:6px}
-  .nav-item{width:100%;height:48px;flex-direction:row;justify-content:flex-start;gap:10px;padding:0 14px;border-radius:10px}
-  .nav-item .nav-icon{font-size:20px}
+  .sidebar{width:var(--sidebar-w-wide);padding-top:var(--space-6);box-shadow:none}
+  .sidebar-logo{width:48px;height:48px;margin-bottom:var(--space-7);border-radius:var(--radius-xl)}
+  .sidebar-nav{align-items:stretch;padding:0 var(--space-3);gap:var(--space-2)}
+  .nav-item{width:100%;height:48px;flex-direction:row;justify-content:flex-start;gap:var(--space-3);padding:0 var(--space-4);border-radius:var(--radius-md)}
+  .nav-item .nav-icon svg{width:22px;height:22px}
   .nav-item .nav-label{font-size:13px}
-  .nav-item.active::before{width:4px;height:24px;left:0}
-  
-  /* 顶部栏 */
-  .topbar{padding:24px 32px 16px}
+  .nav-item.active::before{width:4px;height:24px;left:-4px}
+  .topbar{padding:var(--space-6) var(--space-8) var(--space-4)}
   .topbar h1{font-size:24px}
   .topbar .top-date{font-size:13px}
-  
-  /* 内容区加宽 */
-  .content{width:100%;padding:8px 32px 32px;max-width:1200px;margin:0 auto}
-  
-  /* active页面显示，避免互相覆盖 */
-  #page-plan.active{display:grid !important}
+  .topbar-progress-bar{width:120px}
+  .content{width:100%;padding:var(--space-2) var(--space-8) var(--space-8);max-width:1200px;margin:0 auto}
+  #page-plan.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
   #page-topics.active{display:block !important}
-  #page-idea.active{display:grid !important}
-  #page-life.active{display:grid !important}
-  #page-overview.active{display:grid !important}
-  
-  /* 卡片内padding加大 */
-  .card{padding:22px 20px}
-  
-  /* === 计划页：两列布局 === */
-  #page-plan{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-  /* 工作流、本周推荐、日期、切换按钮 横跨两列 */
+  #page-idea.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-life.active{display:grid !important;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
+  #page-overview.active{display:grid !important;grid-template-columns:2fr 1fr;gap:var(--space-4);align-items:start}
+  .card{padding:var(--space-6) var(--space-5)}
+  #page-plan{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
   #page-plan > #workflowCard{grid-column:1/-1}
   #page-plan > #weeklyCard{grid-column:1/-1}
   #page-plan > div[style*="text-align:center"]{grid-column:1/-1}
   #page-plan > .card{margin-bottom:0}
-  
-  /* === 选题页 === */
-  #page-topics > #dailyCard{margin-bottom:16px}
-  #page-topics > .subtabs{margin-bottom:16px}
-  
-  /* === 灵感页：输入区+列表两列 === */
-  #page-idea{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-topics > #dailyCard{margin-bottom:var(--space-4)}
+  #page-topics > .subtabs{margin-bottom:var(--space-4)}
+  #page-idea{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
   #page-idea > .card{margin-bottom:0}
   #page-idea > .section-label{grid-column:1/-1}
   #page-idea > #ideaList{grid-column:1/-1}
-  
-  /* === 生活页：日记+历史两列 === */
-  #page-life{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-life{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start}
   #page-life > .card{margin-bottom:0}
   #page-life > .section-label{grid-column:1/-1}
   #page-life > #lifeHistory{grid-column:1/-1}
-  
-  /* === 总览页：卡片两列 === */
-  #page-overview{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-overview{display:grid;grid-template-columns:2fr 1fr;gap:var(--space-4);align-items:start}
   #page-overview > .card{margin-bottom:0}
-  /* 运营报告、云端同步、本地操作、底部信息 横跨两列 */
-  #page-overview > #reportCard{grid-column:1/-1}
-  #page-overview > #syncCard{grid-column:1/-1}
-  #page-overview > #localCard{grid-column:1/-1}
+  #page-overview > #reportCard{grid-column:1;grid-row:1/4}
+  #page-overview > #accountCard{grid-column:2;grid-row:1}
+  #page-overview > #syncCard{grid-column:2;grid-row:2}
+  #page-overview > #localCard{grid-column:2;grid-row:3}
   #page-overview > div:last-child{grid-column:1/-1}
-  
-  /* 统计网格在宽屏下4列 */
-  .stat-grid{grid-template-columns:repeat(4,1fr);gap:12px}
-  
-  /* 输入框字体 */
+  .stat-grid{grid-template-columns:repeat(4,1fr);gap:var(--space-3)}
   .input,.textarea{font-size:14px}
-  
-  /* toast位置 */
-  .toast{bottom:40px}
+  .toast{bottom:var(--space-10)}
 }
 </style>
 </head>
@@ -320,13 +441,19 @@ button{cursor:pointer}
 <div id="app">
   <!-- ========== 左侧边栏 ========== -->
   <div class="sidebar">
-    <div class="sidebar-logo">鹿</div>
+    <div class="sidebar-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C7 7 4 10 4 14a8 8 0 0 0 16 0c0-4-3-7-8-12z"/></svg></div>
     <div class="sidebar-nav">
-      <div class="nav-item active" onclick="switchPage('plan')"><span class="nav-icon">📋</span><span class="nav-label">计划</span></div>
-      <div class="nav-item" onclick="switchPage('topics')"><span class="nav-icon">📚</span><span class="nav-label">选题</span></div>
-      <div class="nav-item" onclick="switchPage('idea')"><span class="nav-icon">💡</span><span class="nav-label">灵感</span></div>
-      <div class="nav-item" onclick="switchPage('life')"><span class="nav-icon">📖</span><span class="nav-label">生活</span></div>
-      <div class="nav-item" onclick="switchPage('overview')"><span class="nav-icon">📊</span><span class="nav-label">总览</span></div>
+      <div class="nav-item active" onclick="switchPage('plan')"><span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><span class="nav-label">计划</span></div>
+      <div class="nav-item" onclick="switchPage('topics')"><span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span class="nav-label">选题</span></div>
+      <div class="nav-item" onclick="switchPage('idea')"><span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.7.5 1 1.3 1 2.3v1h6v-1c0-1 .3-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></span><span class="nav-label">灵感</span></div>
+      <div class="nav-item" onclick="switchPage('life')"><span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg></span><span class="nav-label">生活</span></div>
+      <div class="nav-item" onclick="switchPage('overview')"><span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></span><span class="nav-label">总览</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-item" onclick="toggleDarkMode()" id="darkToggle">
+        <span class="nav-icon" id="darkIcon"><svg class="icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+        <span class="nav-label" id="darkLabel">深色</span>
+      </div>
     </div>
   </div>
 
@@ -334,8 +461,21 @@ button{cursor:pointer}
   <div class="main">
   <!-- ========== 顶部栏 ========== -->
   <div class="topbar">
-    <h1 id="pageTitle">今日计划</h1>
-    <span class="top-date" id="topDate"></span>
+    <div class="topbar-left">
+      <h1 id="pageTitle">今日计划</h1>
+      <div class="topbar-progress">
+        <span id="progressLabel">已完成 0/0</span>
+        <div class="topbar-progress-bar">
+          <div class="topbar-progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="top-date" id="topDate"></span>
+      <div class="topbar-dark-btn" onclick="toggleDarkMode()" id="topDarkBtn" title="切换深色模式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </div>
+    </div>
   </div>
 
   <!-- ========== 内容区 ========== -->
@@ -348,77 +488,77 @@ button{cursor:pointer}
       </div>
 
       <!-- 今日工作流：晨间整理 + 晚间复盘 -->
-      <div class="card" id="workflowCard" style="border:1.5px solid var(--primary-light);background:linear-gradient(180deg,#fbfaf7,#fff)">
+      <div class="card card-primary" id="workflowCard">
         <div class="card-title">
-          <span class="emoji">⏰</span>今日工作流
-          <span id="workflowPhase" style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:6px;background:var(--primary-bg);color:var(--primary);font-weight:500">晨间</span>
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>今日工作流
+          <span id="workflowPhase" style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary);font-weight:var(--fw-medium)">晨间</span>
         </div>
         <div id="workflowMorning">
-          <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px">🌅 晨间 15min · 快速整理今天</div>
+          <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--primary);margin-bottom:var(--space-2)">🌅 晨间 15min · 快速整理今天</div>
           <div id="morningChecklist"></div>
-          <div style="margin-top:10px;display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics',window.event)">🌟 看今日选题</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="scrollToCard('top3Card')">🎯 填三件事</button>
+          <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics',window.event)">看今日选题</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="scrollToCard('top3Card')">填三件事</button>
           </div>
         </div>
         <div id="workflowEvening" style="display:none">
-          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px">🌙 晚间 10min · 复盘今天</div>
+          <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--accent);margin-bottom:var(--space-2)">🌙 晚间 10min · 复盘今天</div>
           <div id="eveningChecklist"></div>
-          <div style="margin-top:10px;display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">📖 写生活记录</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('idea',window.event)">💡 补灵感</button>
+          <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">写生活记录</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('idea',window.event)">补灵感</button>
           </div>
         </div>
-        <div style="margin-top:10px">
+        <div style="margin-top:var(--space-3)">
           <button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:5px 8px" id="phaseToggleBtn" onclick="toggleWorkflowPhase()">🌙 切到晚间复盘</button>
         </div>
-        <div style="margin-top:8px;font-size:10px;color:#bbb;text-align:center">周日 30min：三账号复盘 → 调整下周选题</div>
+        <div style="margin-top:var(--space-2);font-size:10px;color:var(--text-muted);text-align:center">周日 30min：三账号复盘 → 调整下周选题</div>
       </div>
 
       <!-- 本周全部推荐 -->
       <div class="card" id="weeklyCard" style="display:none">
         <div class="card-title">
-          <span class="emoji">📅</span>本周全部推荐
-          <span style="margin-left:auto;font-size:10px;padding:3px 8px;background:var(--primary-bg);border-radius:5px;color:var(--primary);font-weight:400" id="homeStageLabel" onclick="toggleHomeStage()">水电阶段</span>
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>本周全部推荐
+          <span style="margin-left:auto;font-size:10px;padding:3px 8px;background:var(--primary-bg);border-radius:var(--radius-sm);color:var(--primary);font-weight:var(--fw-regular)" id="homeStageLabel" onclick="toggleHomeStage()">水电阶段</span>
         </div>
         <div id="weeklyRecommend"></div>
-        <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="refreshWeekly()">🔄 重新生成本周推荐</button>
+        <button class="btn btn-outline btn-block" style="margin-top:var(--space-3)" onclick="refreshWeekly()">重新生成本周推荐</button>
       </div>
 
-      <div style="text-align:center;margin-bottom:14px">
-        <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">📅 查看本周全部推荐</button>
+      <div style="text-align:center;margin-bottom:var(--space-4)">
+        <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">查看本周全部推荐</button>
       </div>
 
       <div class="card" id="top3Card">
-        <div class="card-title"><span class="emoji">🎯</span>今日三件最重要的事</div>
+        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>今日三件最重要的事</div>
         <div id="top3List"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
           <input class="input" id="top3Input" placeholder="添加一件最重要的事..." style="flex:1">
           <button class="btn btn-primary btn-sm" onclick="addTop3()">添加</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="emoji">📱</span>今日内容发布追踪</div>
+        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2v14h20zM8 21h8M12 17v4"/></svg></span>今日内容发布追踪</div>
         <table class="track-table" id="trackTable"></table>
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="emoji">📋</span>其他待办</div>
+        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>其他待办</div>
         <div id="todoList"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
           <input class="input" id="todoInput" placeholder="添加待办事项..." style="flex:1">
           <button class="btn btn-primary btn-sm" onclick="addTodo()">添加</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="emoji">📊</span>今日数据速记</div>
+        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg></span>今日数据速记</div>
         <div id="dataQuick"></div>
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="emoji">✏️</span>今日小记</div>
+        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></span>今日小记</div>
         <textarea class="textarea" id="dailyNote" placeholder="一句话记录今天..." style="min-height:50px"></textarea>
       </div>
     </div>
@@ -426,19 +566,19 @@ button{cursor:pointer}
     <!-- ===== 页面1: 选题库 ===== -->
     <div class="page" id="page-topics">
       <!-- 今日选题推荐（三账号） -->
-      <div class="card" id="dailyCard" style="border:1.5px solid var(--primary-light)">
+      <div class="card card-primary" id="dailyCard">
         <div class="card-title">
-          <span class="emoji">🌟</span>今日选题推荐
-          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:400" id="dayLabel"></span>
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4.5L6 21l1.5-7.5L2 9h7z"/></svg></span>今日选题推荐
+          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:var(--fw-regular)" id="dayLabel"></span>
         </div>
         <div id="dailyRecommend"></div>
-        <div style="margin-top:10px;font-size:11px;color:#bbb;text-align:center">每天 3 个账号各推 5 个 · 点击标记要做的 · ❌不要的会永久移除</div>
+        <div style="margin-top:var(--space-3);font-size:11px;color:var(--text-muted);text-align:center">每天 3 个账号各推 5 个 · 点击标记要做的 · ❌不要的会永久移除</div>
       </div>
 
       <div class="subtabs">
-        <div class="subtab active" onclick="switchAccount('luxe')">🌸 鹿溪风</div>
-        <div class="subtab" onclick="switchAccount('home')">🏠 鹿住新家</div>
-        <div class="subtab" onclick="switchAccount('slow')">🌿 鹿慢慢</div>
+        <div class="subtab active" onclick="switchAccount('luxe')">鹿溪风</div>
+        <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
+        <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
       </div>
       <div id="topicsContainer"></div>
     </div>
@@ -447,12 +587,12 @@ button{cursor:pointer}
     <div class="page" id="page-idea">
       <div class="card">
         <div class="card-title">
-          <span class="emoji">💡</span>快速记录灵感
-          <button id="voiceBtn" class="btn btn-outline btn-sm" style="margin-left:auto;padding:5px 10px;font-size:12px" onclick="toggleVoice()">🎤 语音输入</button>
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.7.5 1 1.3 1 2.3v1h6v-1c0-1 .3-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></span>快速记录灵感
+          <button id="voiceBtn" class="btn btn-outline btn-sm" style="margin-left:auto;padding:5px 10px;font-size:12px" onclick="toggleVoice()">语音输入</button>
         </div>
         <textarea class="textarea" id="ideaInput" placeholder="想到什么写什么，不用完整...也可以点语音输入" style="min-height:70px"></textarea>
-        <div id="voiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:6px;text-align:center">🔴 录音中... 点击停止</div>
-        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <div id="voiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止</div>
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3);align-items:center">
           <select class="input" id="ideaAccount" style="flex:1;font-size:13px">
             <option value="">选择归属账号（可选）</option>
             <option value="鹿溪风">鹿溪风</option>
@@ -471,7 +611,7 @@ button{cursor:pointer}
     <div class="page" id="page-life">
       <div class="card">
         <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:6px" id="lifeDate"></div>
-        <div class="card-title" style="justify-content:center"><span class="emoji">📖</span>今日日记</div>
+        <div class="card-title" style="justify-content:center"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg></span>今日日记</div>
         <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:4px">今天的状态</div>
         <div class="mood-picker" style="justify-content:center" id="moodPicker">
           <span class="mood" data-mood="😊">😊</span>
@@ -495,104 +635,134 @@ button{cursor:pointer}
 
     <!-- ===== 页面4: 总览 ===== -->
     <div class="page" id="page-overview">
-      <div class="card">
-        <div class="card-title"><span class="emoji">🗺️</span>三个独立账号</div>
-        <div class="overview-account">
-          <div class="overview-avatar" style="background:#FDF0EC">🌸</div>
-          <div class="overview-info"><div class="overview-name">鹿溪风</div><div class="overview-desc">书法文创独立号 · 产品变现</div></div>
-        </div>
-        <div class="overview-account">
-          <div class="overview-avatar" style="background:#EBF1F5">🏠</div>
-          <div class="overview-info"><div class="overview-name">鹿住新家</div><div class="overview-desc">装修独立号 · 设计师老公操刀400㎡复式</div></div>
-        </div>
-        <div class="overview-account">
-          <div class="overview-avatar" style="background:#EAF3EE">🌿</div>
-          <div class="overview-info"><div class="overview-name">鹿慢慢</div><div class="overview-desc">个人IP独立号 · 创业妈妈/女性成长</div></div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-light);text-align:center">三个号各自独立运营 · 各有主线 · 互不依赖</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="emoji">🔗</span>自然联动（加分项，非绑定）</div>
-        <div style="font-size:13px;line-height:1.8;color:var(--text-light)">
-          三个号独立运营，但你是同一个人，偶尔自然联动能让流量互通：<br><br>
-          <b style="color:var(--text)">鹿慢慢 ↔ 鹿溪风</b>（品牌背书核心）<br>
-          <span style="color:var(--text-light)">· 鹿慢慢是"自我表达出口"，真实>带货</span><br>
-          <span style="color:var(--text-light)">· 每月1-2条"我为什么做书法文创"的创业真实记录</span><br>
-          <span style="color:var(--text-light)">· 不卖货，讲初心/过程/感受，信任自然流向鹿溪风</span><br>
-          <span style="color:var(--text-light)">· 这就是品牌说服力：一个真实的人做的产品</span><br><br>
-          <b style="color:var(--text)">鹿慢慢 ↔ 鹿住新家</b>（生活视角联动）<br>
-          <span style="color:var(--text-light)">· 鹿慢慢讲"创业妈妈想要的家"</span><br>
-          <span style="color:var(--text-light)">· 鹿住新家讲"这个家怎么装的"</span><br>
-          <span style="color:var(--text-light)">· 同一件事两个视角，互相导流</span><br><br>
-          <b style="color:var(--text)">鹿溪风 ↔ 鹿住新家</b>（最弱，少联动）<br>
-          <span style="color:var(--text-light)">· 只在生活场景里偶尔露出文创产品</span><br>
-          <div style="margin-top:10px;padding:10px 12px;background:var(--primary-bg);border-radius:8px;font-size:12px;line-height:1.7">
-            💡 联动原则：<br>
-            · 三个号都能独立存活，不靠导流续命<br>
-            · 鹿慢慢保持真实自我表达，不变成"带货号"<br>
-            · 品牌背书靠"真实的人"，不靠"老板人设"<br>
-            · 联动是锦上添花，一周最多1-2次
-          </div>
-        </div>
-      </div>
-
-      <!-- 统计报告系统 -->
-      <div class="card" id="reportCard" style="border:1.5px solid var(--primary-light)">
+      <!-- 运营报告（主卡片，始终展开） -->
+      <div class="card card-primary" id="reportCard">
         <div class="card-title">
-          <span class="emoji">📊</span>运营报告
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></span>运营报告
         </div>
         <div class="subtabs" id="reportTabs">
-          <div class="subtab active" onclick="switchReportRange('week')">📅 周报</div>
-          <div class="subtab" onclick="switchReportRange('month')">🗓️ 月报</div>
-          <div class="subtab" onclick="switchReportRange('year')">📆 年报</div>
+          <div class="subtab active" onclick="switchReportRange('week')">周报</div>
+          <div class="subtab" onclick="switchReportRange('month')">月报</div>
+          <div class="subtab" onclick="switchReportRange('year')">年报</div>
         </div>
         <div id="reportContainer"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="emoji">⏰</span>每日工作流</div>
-        <div style="font-size:13px;line-height:1.7;color:var(--text-light)">
-          <b style="color:var(--text)">晨间 15min</b>：填计划 → 看选题 → 灵感入箱<br>
-          <b style="color:var(--text)">创作时段</b>：集中拍摄，一次拍多条<br>
-          <b style="color:var(--text)">晚间 10min</b>：发布 → 生活记录 → 补灵感<br>
-          <b style="color:var(--text)">周日 30min</b>：三账号复盘 → 调下周选题
+      <!-- 三个独立账号（可折叠） -->
+      <div class="card card-collapsible expanded" id="accountCard">
+        <div class="card-title" onclick="toggleCollapse(this)">
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>三个独立账号
+          <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
         </div>
-        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;font-size:12px" onclick="switchPage('plan',window.event)">📋 去计划页执行工作流</button>
+        <div class="card-body">
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--accent-100);color:var(--accent-700)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C7 7 4 10 4 14a8 8 0 0 0 16 0c0-4-3-7-8-12z"/></svg></div>
+            <div class="overview-info"><div class="overview-name">鹿溪风</div><div class="overview-desc">书法文创独立号 · 产品变现</div></div>
+          </div>
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--blue-100);color:var(--blue-700)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg></div>
+            <div class="overview-info"><div class="overview-name">鹿住新家</div><div class="overview-desc">装修独立号 · 设计师老公操刀400㎡复式</div></div>
+          </div>
+          <div class="overview-account">
+            <div class="overview-avatar" style="background:var(--green-100);color:var(--green-700)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-12V5l-8-3-8 3v5c0 8 8 12 8 12z"/></svg></div>
+            <div class="overview-info"><div class="overview-name">鹿慢慢</div><div class="overview-desc">个人IP独立号 · 创业妈妈/女性成长</div></div>
+          </div>
+          <div style="margin-top:var(--space-3);font-size:11px;color:var(--text-light);text-align:center">三个号各自独立运营 · 各有主线 · 互不依赖</div>
+        </div>
       </div>
 
-      <div class="card" id="syncCard">
-        <div class="card-title"><span class="emoji">☁️</span>云端同步（手机电脑同步）</div>
-        <div id="tokenSection" style="margin-bottom:10px">
-          <div style="font-size:12px;color:var(--text-light);margin-bottom:6px">首次使用请输入 GitHub Token（只需一次）：</div>
-          <div style="display:flex;gap:8px">
-            <input class="input" id="ghTokenInput" placeholder="ghp_..." style="flex:1;font-size:13px" type="password">
-            <button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
+      <!-- 自然联动（可折叠） -->
+      <div class="card card-collapsible" id="linkageCard">
+        <div class="card-title" onclick="toggleCollapse(this)">
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span>自然联动
+          <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:13px;line-height:1.8;color:var(--text-light)">
+            三个号独立运营，但你是同一个人，偶尔自然联动能让流量互通：<br><br>
+            <b style="color:var(--text)">鹿慢慢 ↔ 鹿溪风</b>（品牌背书核心）<br>
+            <span style="color:var(--text-light)">· 鹿慢慢是"自我表达出口"，真实>带货</span><br>
+            <span style="color:var(--text-light)">· 每月1-2条"我为什么做书法文创"的创业真实记录</span><br>
+            <span style="color:var(--text-light)">· 不卖货，讲初心/过程/感受，信任自然流向鹿溪风</span><br>
+            <span style="color:var(--text-light)">· 这就是品牌说服力：一个真实的人做的产品</span><br><br>
+            <b style="color:var(--text)">鹿慢慢 ↔ 鹿住新家</b>（生活视角联动）<br>
+            <span style="color:var(--text-light)">· 鹿慢慢讲"创业妈妈想要的家"</span><br>
+            <span style="color:var(--text-light)">· 鹿住新家讲"这个家怎么装的"</span><br>
+            <span style="color:var(--text-light)">· 同一件事两个视角，互相导流</span><br><br>
+            <b style="color:var(--text)">鹿溪风 ↔ 鹿住新家</b>（最弱，少联动）<br>
+            <span style="color:var(--text-light)">· 只在生活场景里偶尔露出文创产品</span><br>
+            <div style="margin-top:var(--space-3);padding:var(--space-3);background:var(--primary-bg);border-radius:var(--radius-md);font-size:12px;line-height:1.7">
+              💡 联动原则：<br>
+              · 三个号都能独立存活，不靠导流续命<br>
+              · 鹿慢慢保持真实自我表达，不变成"带货号"<br>
+              · 品牌背书靠"真实的人"，不靠"老板人设"<br>
+              · 联动是锦上添花，一周最多1-2次
+            </div>
           </div>
         </div>
-        <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;line-height:1.5">
-          开启「实时同步」后，每次改动数据会自动上传到云端，其他设备点「从云端拉取」即可同步。<br>
-          建议：换设备前点一下「拉取」获取最新数据。
+      </div>
+
+      <!-- 每日工作流（可折叠） -->
+      <div class="card card-collapsible" id="workflowInfoCard">
+        <div class="card-title" onclick="toggleCollapse(this)">
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>每日工作流
+          <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
         </div>
-        <div id="syncStatus" style="font-size:12px;color:var(--text-light);margin-bottom:8px"></div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-primary btn-block" onclick="syncUpload()">☁️ 上传数据到云端</button>
-          <button class="btn btn-outline btn-block" onclick="syncDownload()">📥 从云端拉取数据</button>
-          <button class="btn btn-outline btn-block" onclick="autoSyncToggle()" id="autoSyncBtn">⚡ 实时同步：关闭</button>
+        <div class="card-body">
+          <div style="font-size:13px;line-height:1.7;color:var(--text-light)">
+            <b style="color:var(--text)">晨间 15min</b>：填计划 → 看选题 → 灵感入箱<br>
+            <b style="color:var(--text)">创作时段</b>：集中拍摄，一次拍多条<br>
+            <b style="color:var(--text)">晚间 10min</b>：发布 → 生活记录 → 补灵感<br>
+            <b style="color:var(--text)">周日 30min</b>：三账号复盘 → 调下周选题
+          </div>
+          <button class="btn btn-outline btn-sm" style="width:100%;margin-top:var(--space-3);font-size:12px" onclick="switchPage('plan',window.event)">去计划页执行工作流</button>
         </div>
       </div>
 
-      <div class="card" id="localCard">
-        <div class="card-title"><span class="emoji">⚡</span>本地操作</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-outline btn-block" onclick="exportData()">📤 导出备份文件</button>
-          <label style="display:flex"><span class="btn btn-outline btn-block" style="width:100%">📥 导入备份文件<input type="file" accept="application/json" style="display:none" onchange="importData(event)"></span></label>
-          <button class="btn btn-outline btn-block" style="color:#d66;border-color:#d66" onclick="clearAll()">🗑️ 清空所有数据</button>
+      <!-- 云端同步（可折叠） -->
+      <div class="card card-collapsible" id="syncCard">
+        <div class="card-title" onclick="toggleCollapse(this)">
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h1a3 3 0 0 1 0 6h-1M6 10H5a3 3 0 0 0 0 6h1M6 14h12"/></svg></span>云端同步
+          <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="card-body">
+          <div id="tokenSection" style="margin-bottom:var(--space-3)">
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)">首次使用请输入 GitHub Token（只需一次）：</div>
+            <div style="display:flex;gap:var(--space-2)">
+              <input class="input" id="ghTokenInput" placeholder="ghp_..." style="flex:1;font-size:13px" type="password">
+              <button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-3);line-height:1.5">
+            开启「实时同步」后，每次改动数据会自动上传到云端，其他设备点「从云端拉取」即可同步。<br>
+            建议：换设备前点一下「拉取」获取最新数据。
+          </div>
+          <div id="syncStatus" style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)"></div>
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <button class="btn btn-primary btn-block" onclick="syncUpload()">上传数据到云端</button>
+            <button class="btn btn-outline btn-block" onclick="syncDownload()">从云端拉取数据</button>
+            <button class="btn btn-outline btn-block" onclick="autoSyncToggle()" id="autoSyncBtn">实时同步：关闭</button>
+          </div>
         </div>
       </div>
 
-      <div style="text-align:center;font-size:11px;color:#ccc;padding:8px 0 4px">
-        鹿系工作台 · v2.0 · 支持多设备同步
+      <!-- 本地操作（可折叠） -->
+      <div class="card card-collapsible" id="localCard">
+        <div class="card-title" onclick="toggleCollapse(this)">
+          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5M5 12h14M5 12l-2 7h18l-2-7M9 21h6"/></svg></span>本地操作
+          <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <button class="btn btn-outline btn-block" onclick="exportData()">导出备份文件</button>
+            <label style="display:flex"><span class="btn btn-outline btn-block" style="width:100%">导入备份文件<input type="file" accept="application/json" style="display:none" onchange="importData(event)"></span></label>
+            <button class="btn btn-outline btn-block" style="color:var(--pink-700);border-color:var(--pink-300)" onclick="clearAll()">清空所有数据</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
+        鹿系工作台 · v3.0 · 支持多设备同步
       </div>
     </div>
 
@@ -616,7 +786,7 @@ var TOPICS = {
   luxe: {
     name: '鹿溪风',
     desc: '把书法变成可日常使用的美物',
-    color: '#FDF0EC',
+    color: 'var(--accent-100)',
     directions: [
       { name: '产品展示', icon: '🎨', desc: '核心变现内容' },
       { name: '书写过程', icon: '✍️', desc: '流量内容' },
@@ -657,7 +827,7 @@ var TOPICS = {
   home: {
     name: '鹿住新家',
     desc: '设计师老公操刀 · 400㎡带地下室复式装修全程',
-    color: '#EBF1F5',
+    color: 'var(--blue-100)',
     directions: [
       { name: '进度日记', icon: '📍', desc: '装修期主线' },
       { name: '避坑干货', icon: '⚠️', desc: '高收藏内容' },
@@ -719,7 +889,7 @@ var TOPICS = {
   slow: {
     name: '鹿慢慢',
     desc: '审美实拍+创业妈妈+女性成长',
-    color: '#EAF3EE',
+    color: 'var(--green-100)',
     directions: [
       { name: '审美实拍', icon: '📷', desc: '视觉吸粉主力 30%' },
       { name: '创业妈妈', icon: '💪', desc: '共鸣连接 25%' },
@@ -789,10 +959,10 @@ function switchPage(name, evt){
   currentPage = name;
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById('page-'+name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(t){ t.classList.remove('active'); });
   var e = evt || window.event;
   if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
-  else { var navs = document.querySelectorAll('.nav-item'); var idx = ['plan','topics','idea','life','overview'].indexOf(name); if(idx>=0 && navs[idx]) navs[idx].classList.add('active'); }
+  else { var navs = document.querySelectorAll('.sidebar-nav .nav-item'); var idx = ['plan','topics','idea','life','overview'].indexOf(name); if(idx>=0 && navs[idx]) navs[idx].classList.add('active'); }
   var titles = { plan:'今日计划', topics:'选题库', idea:'灵感记录', life:'生活记录', overview:'总览' };
   document.getElementById('pageTitle').textContent = titles[name];
   document.getElementById('content').scrollTop = 0;
@@ -801,7 +971,72 @@ function switchPage(name, evt){
   if(name==='idea') renderIdeas();
   if(name==='life') renderLife();
   if(name==='overview') renderOverview();
+  updateTopbarProgress();
 }
+
+/* 可折叠卡片 */
+function toggleCollapse(titleEl){
+  var card = titleEl.closest('.card-collapsible');
+  if(card) card.classList.toggle('expanded');
+}
+
+/* 顶部进度条 */
+function updateTopbarProgress(){
+  try{
+    var key = todayKey();
+    var w = DB.get('workflow_'+key, {morning:{},evening:{},custom_morning:[],custom_evening:[]});
+    var p = DB.get('plan_'+key, {top3:[],todos:[]});
+    var doneCount = 0, totalCount = 0;
+    var phase = (document.getElementById('workflowPhase')||{}).textContent === '晚间' ? 'evening' : 'morning';
+    var steps = phase === 'morning' ? MORNING_STEPS : EVENING_STEPS;
+    if(steps){ steps.forEach(function(s){ totalCount++; if(w[phase] && w[phase][s.key]) doneCount++; }); }
+    var customSteps = w['custom_'+phase] || [];
+    customSteps.forEach(function(s, i){ totalCount++; if(w[phase] && w[phase]['custom_'+i]) doneCount++; });
+    if(p.top3) p.top3.forEach(function(t){ totalCount++; if(t.done) doneCount++; });
+    if(p.todos) p.todos.forEach(function(t){ totalCount++; if(t.done) doneCount++; });
+    var pct = totalCount > 0 ? Math.round(doneCount/totalCount*100) : 0;
+    var label = document.getElementById('progressLabel');
+    var fill = document.getElementById('progressFill');
+    if(label) label.textContent = '已完成 ' + doneCount + '/' + totalCount;
+    if(fill) fill.style.width = pct + '%';
+  }catch(e){}
+}
+
+/* 暗色模式 */
+var darkMode = DB.get('dark_mode', null);
+var darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+if(darkMode === null) darkMode = darkMQ.matches;
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = darkMode ? '#151210' : '#6B5A48';
+  var darkIcon = document.getElementById('darkIcon');
+  var darkLabel = document.getElementById('darkLabel');
+  var topBtn = document.getElementById('topDarkBtn');
+  if(darkMode){
+    if(darkIcon) darkIcon.innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>';
+    if(darkLabel) darkLabel.textContent = '浅色';
+    if(topBtn) topBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>';
+  } else {
+    if(darkIcon) darkIcon.innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+    if(darkLabel) darkLabel.textContent = '深色';
+    if(topBtn) topBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  }
+}
+function toggleDarkMode(){
+  darkMode = !darkMode;
+  DB.set('dark_mode', darkMode);
+  applyTheme();
+  toast(darkMode ? '已切换到深色模式' : '已切换到浅色模式');
+}
+darkMQ.addEventListener('change', function(e){
+  if(DB.get('dark_mode', null) === null){
+    darkMode = e.matches;
+    applyTheme();
+    toast(darkMode ? '跟随系统切换到深色' : '跟随系统切换到浅色');
+  }
+});
+applyTheme();
 
 function switchAccount(acc, evt){
   currentAccount = acc;
@@ -858,7 +1093,7 @@ function renderWorkflow(){
   steps.forEach(function(s){
     var isDone = !!done[s.key];
     html += '<div class="todo-item" onclick="toggleWorkflowStep(\''+s.key+'\')">'+
-      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'✓':'')+'</div>'+
+      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':'')+'</div>'+
       '<div style="flex:1"><div class="todo-text '+(isDone?'done':'')+'">'+s.text+'</div>'+
       '<div style="font-size:11px;color:var(--text-light);margin-top:1px">'+s.hint+'</div></div></div>';
   });
@@ -867,17 +1102,18 @@ function renderWorkflow(){
     var ck = 'custom_'+i;
     var isDone = !!done[ck];
     html += '<div class="todo-item" onclick="toggleWorkflowStep(\''+ck+'\')">'+
-      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'✓':'')+'</div>'+
+      '<div class="todo-check '+(isDone?'done':'')+'">'+(isDone?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':'')+'</div>'+
       '<div style="flex:1"><div class="todo-text '+(isDone?'done':'')+'">'+esc(s)+'</div></div>'+
       '<span class="todo-del" onclick="delCustomWorkflowStep('+i+',event)">✕</span></div>';
   });
   // 添加自定义项的输入框
-  html += '<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'+
+  html += '<div style="display:flex;gap:var(--space-2);margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px dashed var(--border)">'+
     '<input class="input" id="workflowCustomInput_'+phase+'" placeholder="添加自己的步骤..." style="flex:1;font-size:13px;padding:7px 11px">'+
     '<button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 12px" onclick="addCustomWorkflowStep(\''+phase+'\')">+</button>'+
     '</div>';
   var container = document.getElementById(phase === 'morning' ? 'morningChecklist' : 'eveningChecklist');
   if(container) container.innerHTML = html;
+  updateTopbarProgress();
 }
 
 function toggleWorkflowStep(key){
@@ -927,7 +1163,7 @@ function toggleWorkflowPhase(){
     toggleBtn.textContent = '🌙 切到晚间复盘';
   } else {
     phaseLabel.textContent = '晚间';
-    phaseLabel.style.background = '#FDF0EC';
+    phaseLabel.style.background = 'var(--accent-100)';
     phaseLabel.style.color = 'var(--accent)';
     toggleBtn.textContent = '🌅 切回晨间整理';
   }
@@ -951,9 +1187,9 @@ function renderPlan(){
 
   // 三件最重要
   var top3Html = '';
-  if(plan.top3.length === 0) top3Html = '<div class="empty">还没有添加，先想想今天最重要的事</div>';
+  if(plan.top3.length === 0) top3Html = '<div class="empty"><span class="empty-icon">🎯</span><div class="empty-text">还没有添加</div><div class="empty-hint">先想想今天最重要的事</div></div>';
   plan.top3.forEach(function(item, i){
-    top3Html += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTop3('+i+')">'+(item.done?'✓':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTop3('+i+')">✕</span></div>';
+    top3Html += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTop3('+i+')">'+(item.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTop3('+i+')">✕</span></div>';
   });
   document.getElementById('top3List').innerHTML = top3Html;
 
@@ -963,7 +1199,7 @@ function renderPlan(){
   trackAcc.forEach(function(a){
     var dy = plan.track[a[0]+'_dy'] || '⬜';
     var xhs = plan.track[a[0]+'_xhs'] || '⬜';
-    trackHtml += '<tr><td style="font-weight:500">'+a[1]+'</td>'+
+    trackHtml += '<tr><td style="font-weight:var(--fw-medium)">'+a[1]+'</td>'+
       '<td><select onchange="setTrack(\''+a[0]+'\',\'dy\',this.value)">'+
         '<option value="⬜" '+sel(dy,'⬜')+'>⬜未做</option>'+
         '<option value="📝" '+sel(dy,'📝')+'>📝在做</option>'+
@@ -979,9 +1215,9 @@ function renderPlan(){
 
   // 其他待办
   var todoHtml = '';
-  if(plan.todos.length === 0) todoHtml = '<div class="empty">暂无其他待办</div>';
+  if(plan.todos.length === 0) todoHtml = '<div class="empty"><span class="empty-icon">✅</span><div class="empty-text">暂无其他待办</div></div>';
   plan.todos.forEach(function(item, i){
-    todoHtml += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTodo('+i+')">'+(item.done?'✓':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTodo('+i+')">✕</span></div>';
+    todoHtml += '<div class="todo-item"><div class="todo-check '+(item.done?'done':'')+'" onclick="toggleTodo('+i+')">'+(item.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':'')+'</div><div class="todo-text '+(item.done?'done':'')+'">'+esc(item.text)+'</div><span class="todo-del" onclick="delTodo('+i+')">✕</span></div>';
   });
   document.getElementById('todoList').innerHTML = todoHtml;
 
@@ -991,14 +1227,15 @@ function renderPlan(){
   dataAcc.forEach(function(a){
     var dyVal = plan.data[a[0]+'_dy'] || '';
     var xhsVal = plan.data[a[0]+'_xhs'] || '';
-    dataHtml += '<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:4px">'+a[1]+'</div>'+
-      '<div style="display:flex;gap:8px"><input class="input" style="flex:1;font-size:12px" placeholder="抖音数据" value="'+esc(dyVal)+'" oninput="setData(\''+a[0]+'\',\'dy\',this.value)">'+
+    dataHtml += '<div style="margin-bottom:var(--space-3)"><div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">'+a[1]+'</div>'+
+      '<div style="display:flex;gap:var(--space-2)"><input class="input" style="flex:1;font-size:12px" placeholder="抖音数据" value="'+esc(dyVal)+'" oninput="setData(\''+a[0]+'\',\'dy\',this.value)">'+
       '<input class="input" style="flex:1;font-size:12px" placeholder="小红书数据" value="'+esc(xhsVal)+'" oninput="setData(\''+a[0]+'\',\'xhs\',this.value)"></div></div>';
   });
   document.getElementById('dataQuick').innerHTML = dataHtml;
 
   // 小记
   document.getElementById('dailyNote').value = plan.note || '';
+  updateTopbarProgress();
 }
 
 function sel(val, opt){ return val === opt ? 'selected' : ''; }
@@ -1041,7 +1278,7 @@ function renderTopics(){
 
   // 按方向分组
   acc.directions.forEach(function(dir, di){
-    html += '<div class="section-label">'+dir.icon+' '+dir.name+' <span style="color:#bbb;font-weight:400">· '+dir.desc+'</span></div>';
+    html += '<div class="section-label">'+dir.icon+' '+dir.name+' <span style="color:var(--text-muted);font-weight:var(--fw-regular)">· '+dir.desc+'</span></div>';
     accTopics.forEach(function(t, i){
       if(t.d !== di) return;
       var stKey = currentAccount+'_'+i;
@@ -1051,7 +1288,7 @@ function renderTopics(){
         '<div class="topic-head"><div class="topic-title">'+t.t+'</div><div class="topic-status '+stObj.cls+'">'+stObj.icon+'</div></div>'+
         '<div class="topic-meta"><span class="tag tag-'+t.tag+'">'+TAG_MAP[t.tag]+'</span></div>'+
         '<div class="topic-platforms"><span>🎬 '+t.dy+'</span><span>📕 '+t.xhs+'</span></div>'+
-        '<div style="font-size:10px;color:#bbb;margin-top:4px">点击切换状态 → '+stObj.label+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">点击切换状态 → '+stObj.label+'</div>'+
         '</div>';
     });
   });
@@ -1076,7 +1313,7 @@ function renderIdeas(){
   var ideas = DB.get('ideas', []);
   var html = '';
   if(ideas.length === 0){
-    html = '<div class="empty">还没有灵感，想到什么随时记下来</div>';
+    html = '<div class="empty"><span class="empty-icon">💡</span><div class="empty-text">还没有灵感</div><div class="empty-hint">想到什么随时记下来</div></div>';
   } else {
     ideas.slice().reverse().forEach(function(idea, ri){
       var i = ideas.length - 1 - ri;
@@ -1235,7 +1472,7 @@ function renderLife(){
   keys.sort().reverse();
   var html = '';
   if(keys.length === 0){
-    html = '<div class="empty">还没有往期记录</div>';
+    html = '<div class="empty"><span class="empty-icon">📖</span><div class="empty-text">还没有往期记录</div></div>';
   } else {
     keys.slice(0, 20).forEach(function(date){
       var e = DB.get('life_'+date, {});
@@ -1334,7 +1571,7 @@ function renderReport(){
 
   // === 1. 发布完成率 ===
   html += '<div class="report-section">';
-  html += '<div class="report-section-title">📱 内容发布完成率</div>';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2v14h20zM8 21h8M12 17v4"/></svg>内容发布完成率</div>';
 
   var totalPublished = 0;
   var totalPlanned = 0;
@@ -1386,15 +1623,15 @@ function renderReport(){
 
   // 数字总览
   html += '<div class="stat-grid" style="margin-top:12px">';
-  html += '<div class="stat-box green"><div class="stat-num">'+totalPublished+'</div><div class="stat-label">已发布条数</div></div>';
+  html += '<div class="stat-box green"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14l-3-3"/></svg></div><div class="stat-num">'+totalPublished+'</div><div class="stat-label">已发布条数</div></div>';
   var avgPerDay = dates.length > 0 ? (totalPublished / dates.length).toFixed(1) : 0;
-  html += '<div class="stat-box blue"><div class="stat-num">'+avgPerDay+'</div><div class="stat-label">日均发布</div></div>';
+  html += '<div class="stat-box blue"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg></div><div class="stat-num">'+avgPerDay+'</div><div class="stat-label">日均发布</div></div>';
   html += '</div>';
   html += '</div>';
 
   // === 2. 选题进度 ===
   html += '<div class="report-section">';
-  html += '<div class="report-section-title">📚 选题进度</div>';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>选题进度</div>';
 
   var statuses = DB.get('topic_status', {});
   var statusCounts = { idea:0, script:0, shoot:0, done:0, review:0 };
@@ -1408,7 +1645,7 @@ function renderReport(){
   ACCOUNTS.forEach(function(acc){ allTopicCount += TOPICS[acc].topics.length; });
 
   // 饼图风格的图例
-  var pieColors = { idea:'#ccc', script:'var(--blue)', shoot:'#E8A838', done:'var(--green)', review:'var(--pink)' };
+  var pieColors = { idea:'var(--text-muted)', script:'var(--blue)', shoot:'var(--amber)', done:'var(--green)', review:'var(--pink)' };
   var pieLabels = { idea:'💡构想', script:'📝脚本', shoot:'🎬拍摄', done:'✅已发', review:'📊复盘' };
 
   // 按账号统计
@@ -1440,7 +1677,7 @@ function renderReport(){
 
   // === 3. 每日待办完成率 ===
   html += '<div class="report-section">';
-  html += '<div class="report-section-title">✅ 每日待办完成率</div>';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>每日待办完成率</div>';
 
   var totalTop3 = 0, doneTop3 = 0;
   var totalTodos = 0, doneTodos = 0;
@@ -1465,20 +1702,20 @@ function renderReport(){
   var donePct = allTotal > 0 ? Math.round(allDone/allTotal*100) : 0;
 
   html += '<div class="stat-grid">';
-  html += '<div class="stat-box green"><div class="stat-num">'+allDone+'/'+allTotal+'</div><div class="stat-label">已完成/总待办</div></div>';
-  html += '<div class="stat-box accent"><div class="stat-num">'+donePct+'%</div><div class="stat-label">完成率</div></div>';
+  html += '<div class="stat-box green"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="stat-num">'+allDone+'/'+allTotal+'</div><div class="stat-label">已完成/总待办</div></div>';
+  html += '<div class="stat-box accent"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></div><div class="stat-num">'+donePct+'%</div><div class="stat-label">完成率</div></div>';
   html += '</div>';
 
   // 活跃天数
   html += '<div class="stat-grid" style="margin-top:8px">';
-  html += '<div class="stat-box blue"><div class="stat-num">'+activeDays+'</div><div class="stat-label">活跃天数</div></div>';
-  html += '<div class="stat-box"><div class="stat-num">'+dates.length+'</div><div class="stat-label">统计天数</div></div>';
+  html += '<div class="stat-box blue"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="stat-num">'+activeDays+'</div><div class="stat-label">活跃天数</div></div>';
+  html += '<div class="stat-box"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div><div class="stat-num">'+dates.length+'</div><div class="stat-label">统计天数</div></div>';
   html += '</div>';
   html += '</div>';
 
   // === 4. 灵感/生活活跃度 ===
   html += '<div class="report-section">';
-  html += '<div class="report-section-title">💡 灵感 & 📖 生活活跃度</div>';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.7.5 1 1.3 1 2.3v1h6v-1c0-1 .3-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>灵感 & 生活活跃度</div>';
 
   var ideas = DB.get('ideas', []);
   var rangeIdeas = ideas.filter(function(idea){ return dates.indexOf(idea.date) !== -1; });
@@ -1490,8 +1727,8 @@ function renderReport(){
   });
 
   html += '<div class="stat-grid">';
-  html += '<div class="stat-box pink"><div class="stat-num">'+rangeIdeas.length+'</div><div class="stat-label">灵感条数</div></div>';
-  html += '<div class="stat-box green"><div class="stat-num">'+lifeDays+'</div><div class="stat-label">生活记录天数</div></div>';
+  html += '<div class="stat-box pink"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.7.5 1 1.3 1 2.3v1h6v-1c0-1 .3-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></div><div class="stat-num">'+rangeIdeas.length+'</div><div class="stat-label">灵感条数</div></div>';
+  html += '<div class="stat-box green"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div class="stat-num">'+lifeDays+'</div><div class="stat-label">生活记录天数</div></div>';
   html += '</div>';
 
   // 灵感按账号分布
@@ -1516,14 +1753,14 @@ function renderReport(){
   if(rangeIdeas.length > 0){
     html += '<div style="margin-top:10px;font-size:12px;color:var(--text-light)">最近灵感：</div>';
     rangeIdeas.slice(-3).reverse().forEach(function(idea){
-      html += '<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:#bbb">'+idea.date.slice(5)+'</span> '+esc(idea.content.slice(0,30))+'</div>';
+      html += '<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted)">'+idea.date.slice(5)+'</span> '+esc(idea.content.slice(0,30))+'</div>';
     });
   }
   html += '</div>';
 
   // === 5. 自动文字总结 ===
   html += '<div class="report-section">';
-  html += '<div class="report-section-title">📝 自动总结</div>';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>自动总结</div>';
   html += '<div class="report-summary">';
 
   var rangeLabel = range === 'week' ? '本周' : (range === 'month' ? '本月' : '本年');
@@ -1890,7 +2127,7 @@ function renderDaily(){
       html += '<div class="topic-meta" style="margin-top:2px"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
       html += '<div class="topic-platforms" style="margin-top:3px;font-size:10px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
       // 不要按钮
-      html += '<div onclick="rejectTopic(\''+acc+'\','+pick.idx+',event)" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#f0ddd8;color:#c55;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer">✕</div>';
+      html += '<div onclick="rejectTopic(\''+acc+'\','+pick.idx+',event)" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--accent-100);color:var(--accent-700);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer">✕</div>';
       html += '</div>';
     });
 
@@ -1901,7 +2138,7 @@ function renderDaily(){
     html += '</div>';
   });
 
-  html += '<div style="font-size:10px;color:#bbb;text-align:center;margin-top:4px">推荐仅供参考 · 你实际发什么自己定</div>';
+  html += '<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">推荐仅供参考 · 你实际发什么自己定</div>';
 
   document.getElementById('dailyRecommend').innerHTML = html;
 }
@@ -2177,11 +2414,11 @@ function syncUpload(silent){
       setSyncStatus('✅ 已同步 · ' + time + (realtimeSyncEnabled ? ' · 实时同步中' : ''), 'var(--green)');
       if(!silent) toast('数据已上传到云端 ☁️');
     } else {
-      setSyncStatus('❌ 上传失败: ' + (result.message || '未知错误'), '#d66');
+      setSyncStatus('❌ 上传失败: ' + (result.message || '未知错误'), 'var(--pink-700)');
       if(!silent) toast('上传失败: ' + (result.message || ''));
     }
   }).catch(function(err){
-    setSyncStatus('❌ 网络错误: ' + err.message, '#d66');
+    setSyncStatus('❌ 网络错误: ' + err.message, 'var(--pink-700)');
     if(!silent) toast('网络错误: ' + err.message);
   });
 }
@@ -2206,7 +2443,7 @@ function syncDownload(){
     renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
   }).catch(function(err){
     if(err.message !== 'no data'){
-      setSyncStatus('❌ 拉取失败: ' + err.message, '#d66');
+      setSyncStatus('❌ 拉取失败: ' + err.message, 'var(--pink-700)');
       toast('拉取失败');
     }
   });
@@ -2295,6 +2532,7 @@ renderTopics();
 renderIdeas();
 renderLife();
 renderOverview();
+updateTopbarProgress();
 checkTokenExists();
 // 2. 恢复实时同步开关状态
 restoreRealtimeSyncState();
