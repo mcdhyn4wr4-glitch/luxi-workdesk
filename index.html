@@ -564,27 +564,43 @@ button{cursor:pointer}
 
     <!-- ===== 页面1: 选题库 ===== -->
     <div class="page" id="page-topics">
-      <!-- 今日选题推荐（三账号） -->
-      <div class="card card-primary" id="dailyCard">
-        <div class="card-title">
-          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4.5L6 21l1.5-7.5L2 9h7z"/></svg></span>今日选题推荐
-          <span style="margin-left:auto;font-size:11px;color:var(--text-light);font-weight:var(--fw-regular)" id="dayLabel"></span>
+      <!-- 上方两张卡片：今日推荐 + 已完成选题 -->
+      <div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-3)">
+        <!-- 今日推荐 -->
+        <div class="card card-primary" id="dailyCard" style="flex:1;cursor:pointer" onclick="scrollToDaily()">
+          <div class="card-title" style="margin-bottom:var(--space-2)">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4.5L6 21l1.5-7.5L2 9h7z"/></svg></span>今日推荐
+          </div>
+          <div style="font-size:12px;color:var(--text-light);line-height:1.5">每天3个账号各推5个选题，点击下方展开查看</div>
+          <div style="margin-top:var(--space-2);font-size:11px;color:var(--accent-700);font-weight:var(--fw-medium)" id="dayLabel"></div>
         </div>
-        <div id="dailyRecommend"></div>
-        <div style="margin-top:var(--space-3);font-size:11px;color:var(--text-muted);text-align:center">每天 3 个账号各推 5 个 · 点击标记要做的 · ❌不要的会永久移除</div>
+        <!-- 已完成选题 -->
+        <div class="card" style="flex:1;cursor:pointer;background:var(--green-100);border-color:var(--green-300)" onclick="switchTopicFilter('done',event);scrollToLibrary()">
+          <div class="card-title" style="margin-bottom:var(--space-2)">
+            <span class="icon-wrap" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14l-3-3"/></svg></span>已完成
+          </div>
+          <div style="font-size:26px;font-weight:var(--fw-bold);color:var(--green-700)" id="doneCountBig">0</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:2px">个选题已完成</div>
+        </div>
       </div>
 
-      <div class="subtabs">
-        <div class="subtab active" onclick="switchAccount('luxe')">鹿溪风</div>
-        <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
-        <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
+      <!-- 今日推荐展开区 -->
+      <div id="dailyRecommend"></div>
+
+      <!-- 选题库 -->
+      <div id="topicLibrary" style="margin-top:var(--space-4)">
+        <div class="subtabs">
+          <div class="subtab active" onclick="switchAccount('luxe')">鹿溪风</div>
+          <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
+          <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
+        </div>
+        <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
+          <div class="subtab active" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('all',event)">选题库</div>
+          <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('done',event)">已完成</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text-light);align-self:center" id="topicCount"></div>
+        </div>
+        <div id="topicsContainer"></div>
       </div>
-      <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
-        <div class="subtab active" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('all',event)">选题库</div>
-        <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('done',event)">已完成</div>
-        <div style="margin-left:auto;font-size:11px;color:var(--text-light);align-self:center" id="topicCount"></div>
-      </div>
-      <div id="topicsContainer"></div>
     </div>
 
     <!-- ===== 页面2: 灵感记录 ===== -->
@@ -1268,6 +1284,30 @@ function scrollToCard(id){
   }
 }
 
+function scrollToDaily(){
+  var el = document.getElementById('dailyRecommend');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function scrollToLibrary(){
+  var el = document.getElementById('topicLibrary');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* 更新已完成选题数字 */
+function updateDoneCount(){
+  var statuses = DB.get('topic_status', {});
+  var totalDone = 0;
+  ACCOUNTS.forEach(function(acc){
+    var accTopics = TOPICS[acc].topics;
+    accTopics.forEach(function(t, i){
+      var st = statuses[acc+'_'+i] || 'idea';
+      if(st === 'done' || st === 'review') totalDone++;
+    });
+  });
+  var el = document.getElementById('doneCountBig');
+  if(el) el.textContent = totalDone;
+}
+
 /* ==================== 每日计划渲染 ==================== */
 function renderPlan(){
   var key = todayKey();
@@ -1414,6 +1454,7 @@ function renderTopics(){
   }
 
   document.getElementById('topicsContainer').innerHTML = html;
+  updateDoneCount();
 }
 
 function cycleStatus(key){
@@ -1425,7 +1466,30 @@ function cycleStatus(key){
   DB.set('topic_status', statuses);
   renderTopics();
   toast('状态 → ' + STATUS_LIST[idx].label);
+  // 如果变成已发，自动同步到今天的发布追踪
+  if(STATUS_LIST[idx].v === 'done'){
+    syncDoneTopicToPlan(key);
+  }
   scheduleRealtimeSync();
+}
+
+/* 已完成的选题自动同步到每日发布追踪 */
+function syncDoneTopicToPlan(topicKey){
+  // topicKey 格式: luxe_3
+  var parts = topicKey.split('_');
+  if(parts.length !== 2) return;
+  var acc = parts[0];
+  var idx = parseInt(parts[1]);
+  var topic = TOPICS[acc].topics[idx];
+  if(!topic) return;
+  // 同步到今天的计划 - 抖音和小红书都标记为已发
+  var key = todayKey();
+  var plan = DB.get('plan_'+key, { top3:[], todos:[], track:{}, data:{}, note:'' });
+  if(!plan.track) plan.track = {};
+  plan.track[acc+'_dy'] = '✅';
+  plan.track[acc+'_xhs'] = '✅';
+  DB.set('plan_'+key, plan);
+  toast(ACC_NAMES[acc]+' · 已同步到今日发布追踪 ✓');
 }
 
 /* ==================== 灵感记录渲染 ==================== */
@@ -2832,6 +2896,7 @@ renderTopics();
 renderIdeas();
 renderLife();
 renderOverview();
+updateDoneCount();
 updateTopbarProgress();
 checkTokenExists();
 // 2. 恢复实时同步开关状态
