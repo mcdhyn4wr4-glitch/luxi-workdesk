@@ -82,8 +82,8 @@ button{cursor:pointer}
 
 /* 内容区 */
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 18px calc(env(safe-area-inset-bottom) + 24px)}
-.page{display:none;animation:fadeIn .3s ease}
-.page.active{display:block}
+.page{display:none !important;animation:fadeIn .3s ease}
+.page.active{display:block !important}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* ==================== 通用组件 ==================== */
@@ -259,11 +259,51 @@ button{cursor:pointer}
   .topbar h1{font-size:24px}
   .topbar .top-date{font-size:13px}
   
-  /* 内容区加宽加padding */
-  .content{padding:8px 32px 32px;max-width:1100px;margin:0 auto}
+  /* 内容区加宽 */
+  .content{width:100%;padding:8px 32px 32px;max-width:1200px;margin:0 auto}
   
-/* 卡片内padding加大 */
+  /* active页面显示，避免互相覆盖 */
+  #page-plan.active{display:grid !important}
+  #page-topics.active{display:block !important}
+  #page-idea.active{display:grid !important}
+  #page-life.active{display:grid !important}
+  #page-overview.active{display:grid !important}
+  
+  /* 卡片内padding加大 */
   .card{padding:22px 20px}
+  
+  /* === 计划页：两列布局 === */
+  #page-plan{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  /* 工作流、本周推荐、日期、切换按钮 横跨两列 */
+  #page-plan > #workflowCard{grid-column:1/-1}
+  #page-plan > #weeklyCard{grid-column:1/-1}
+  #page-plan > div[style*="text-align:center"]{grid-column:1/-1}
+  #page-plan > .card{margin-bottom:0}
+  
+  /* === 选题页 === */
+  #page-topics > #dailyCard{margin-bottom:16px}
+  #page-topics > .subtabs{margin-bottom:16px}
+  
+  /* === 灵感页：输入区+列表两列 === */
+  #page-idea{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-idea > .card{margin-bottom:0}
+  #page-idea > .section-label{grid-column:1/-1}
+  #page-idea > #ideaList{grid-column:1/-1}
+  
+  /* === 生活页：日记+历史两列 === */
+  #page-life{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-life > .card{margin-bottom:0}
+  #page-life > .section-label{grid-column:1/-1}
+  #page-life > #lifeHistory{grid-column:1/-1}
+  
+  /* === 总览页：卡片两列 === */
+  #page-overview{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #page-overview > .card{margin-bottom:0}
+  /* 运营报告、云端同步、本地操作、底部信息 横跨两列 */
+  #page-overview > #reportCard{grid-column:1/-1}
+  #page-overview > #syncCard{grid-column:1/-1}
+  #page-overview > #localCard{grid-column:1/-1}
+  #page-overview > div:last-child{grid-column:1/-1}
   
   /* 统计网格在宽屏下4列 */
   .stat-grid{grid-template-columns:repeat(4,1fr);gap:12px}
@@ -498,7 +538,7 @@ button{cursor:pointer}
       </div>
 
       <!-- 统计报告系统 -->
-      <div class="card" style="border:1.5px solid var(--primary-light)">
+      <div class="card" id="reportCard" style="border:1.5px solid var(--primary-light)">
         <div class="card-title">
           <span class="emoji">📊</span>运营报告
         </div>
@@ -521,7 +561,7 @@ button{cursor:pointer}
         <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;font-size:12px" onclick="switchPage('plan',window.event)">📋 去计划页执行工作流</button>
       </div>
 
-      <div class="card">
+      <div class="card" id="syncCard">
         <div class="card-title"><span class="emoji">☁️</span>云端同步（手机电脑同步）</div>
         <div id="tokenSection" style="margin-bottom:10px">
           <div style="font-size:12px;color:var(--text-light);margin-bottom:6px">首次使用请输入 GitHub Token（只需一次）：</div>
@@ -542,7 +582,7 @@ button{cursor:pointer}
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="localCard">
         <div class="card-title"><span class="emoji">⚡</span>本地操作</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-outline btn-block" onclick="exportData()">📤 导出备份文件</button>
