@@ -506,7 +506,6 @@ button{cursor:pointer}
           <div id="eveningChecklist"></div>
           <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
             <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">写生活记录</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('idea',window.event)">补灵感</button>
           </div>
         </div>
         <div style="margin-top:var(--space-3)">
@@ -622,12 +621,16 @@ button{cursor:pointer}
           <span class="mood" data-mood="😴">😴</span>
         </div>
         <div class="section-label" style="margin-top:14px">今天发生了什么</div>
-        <textarea class="textarea" id="lifeEvent" placeholder="值得记住的事..." style="min-height:60px"></textarea>
+        <textarea class="textarea" id="lifeEvent" placeholder="值得记住的事...也可点语音说" style="min-height:60px"></textarea>
         <div class="section-label">今天的感受</div>
-        <textarea class="textarea" id="lifeFeel" placeholder="写写感受..." style="min-height:60px"></textarea>
+        <textarea class="textarea" id="lifeFeel" placeholder="写写感受...也可点语音说" style="min-height:60px"></textarea>
         <div class="section-label">感恩的三件小事</div>
         <textarea class="textarea" id="lifeGratitude" placeholder="1.&#10;2.&#10;3." style="min-height:70px"></textarea>
-        <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="saveLife()">保存今日记录</button>
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
+          <button class="btn btn-outline" style="flex:1" onclick="saveLife()">保存今日记录</button>
+          <button id="lifeVoiceBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeVoice()">语音输入</button>
+        </div>
+        <div id="lifeVoiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止</div>
       </div>
       <div class="section-label">往期记录</div>
       <div id="lifeHistory"></div>
@@ -712,7 +715,7 @@ button{cursor:pointer}
           <div style="font-size:13px;line-height:1.7;color:var(--text-light)">
             <b style="color:var(--text)">晨间 15min</b>：填计划 → 看选题 → 灵感入箱<br>
             <b style="color:var(--text)">创作时段</b>：集中拍摄，一次拍多条<br>
-            <b style="color:var(--text)">晚间 10min</b>：发布 → 生活记录 → 补灵感<br>
+            <b style="color:var(--text)">晚间 10min</b>：发布 → 生活记录<br>
             <b style="color:var(--text)">周日 30min</b>：三账号复盘 → 调下周选题
           </div>
           <button class="btn btn-outline btn-sm" style="width:100%;margin-top:var(--space-3);font-size:12px" onclick="switchPage('plan',window.event)">去计划页执行工作流</button>
@@ -1353,13 +1356,16 @@ function delIdea(i){
 /* ==================== 语音输入功能 ==================== */
 var voiceRecognition = null;
 var voiceActive = false;
+var voiceTarget = 'ideaInput'; // 默认灵感输入框
 
 function toggleVoice(){
-  if(voiceActive){
-    stopVoice();
-  } else {
-    startVoice();
-  }
+  voiceTarget = 'ideaInput';
+  if(voiceActive){ stopVoice(); } else { startVoice(); }
+}
+
+function toggleLifeVoice(){
+  voiceTarget = 'lifeEvent';
+  if(voiceActive){ stopVoice(); } else { startVoice(); }
 }
 
 function startVoice(){
@@ -1374,17 +1380,16 @@ function startVoice(){
   voiceRecognition.continuous = true;
   voiceRecognition.interimResults = true;
 
-  var inp = document.getElementById('ideaInput');
-  var status = document.getElementById('voiceStatus');
-  var btn = document.getElementById('voiceBtn');
+  var inp = document.getElementById(voiceTarget);
+  var isLife = voiceTarget.indexOf('life') === 0;
+  var status = document.getElementById(isLife ? 'lifeVoiceStatus' : 'voiceStatus');
+  var btn = document.getElementById(isLife ? 'lifeVoiceBtn' : 'voiceBtn');
 
   voiceRecognition.onstart = function(){
     voiceActive = true;
-    status.style.display = 'block';
-    btn.textContent = '⏹️ 停止';
-    btn.classList.remove('btn-outline');
-    btn.classList.add('btn-primary');
-    toast('开始语音输入，说话即可 🎤');
+    if(status) status.style.display = 'block';
+    if(btn){ btn.textContent = '停止'; btn.classList.remove('btn-outline'); btn.classList.add('btn-primary'); }
+    toast('开始语音输入，说话即可');
   };
 
   voiceRecognition.onresult = function(event){
@@ -1392,57 +1397,34 @@ function startVoice(){
     var interimText = '';
     for(var i = event.resultIndex; i < event.results.length; i++){
       var transcript = event.results[i][0].transcript;
-      if(event.results[i].isFinal){
-        finalText += transcript;
-      } else {
-        interimText += transcript;
-      }
+      if(event.results[i].isFinal){ finalText += transcript; } else { interimText += transcript; }
     }
-    // 将识别结果追加到输入框
-    if(finalText){
+    if(finalText && inp){
       var current = inp.value;
-      if(current && !current.endsWith('\n') && !current.endsWith(' ')){
-        current += ' ';
-      }
+      if(current && !current.endsWith('\n') && !current.endsWith(' ')){ current += ' '; }
       inp.value = current + finalText;
-      // 触发input事件以保存（如果有监听的话）
     }
-    // 实时显示中间结果（不写入，只在状态栏预览）
-    if(interimText){
-      status.textContent = '🔴 录音中... ' + interimText;
-    }
+    if(interimText && status){ status.textContent = '🔴 录音中... ' + interimText; }
   };
 
   voiceRecognition.onerror = function(event){
-    if(event.error === 'not-allowed'){
-      toast('请允许麦克风权限');
-    } else if(event.error === 'no-speech'){
-      // 没检测到语音，正常现象，不提示
-    } else {
-      toast('语音识别错误: ' + event.error);
-    }
+    if(event.error === 'not-allowed'){ toast('请允许麦克风权限'); }
+    else if(event.error === 'no-speech'){}
+    else { toast('语音识别错误: ' + event.error); }
   };
 
   voiceRecognition.onend = function(){
     voiceActive = false;
-    status.style.display = 'none';
-    status.textContent = '🔴 录音中... 点击停止';
-    btn.textContent = '🎤 语音输入';
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-outline');
+    if(status){ status.style.display = 'none'; status.textContent = '🔴 录音中... 点击停止'; }
+    if(btn){ btn.textContent = '语音输入'; btn.classList.remove('btn-primary'); btn.classList.add('btn-outline'); }
   };
 
-  try {
-    voiceRecognition.start();
-  } catch(e){
-    toast('启动语音失败，请重试');
-  }
+  try { voiceRecognition.start(); }
+  catch(e){ toast('启动语音失败，请重试'); }
 }
 
 function stopVoice(){
-  if(voiceRecognition){
-    voiceRecognition.stop();
-  }
+  if(voiceRecognition){ voiceRecognition.stop(); }
 }
 /* ==================== 生活记录渲染 ==================== */
 var currentLifeDate = todayKey();
