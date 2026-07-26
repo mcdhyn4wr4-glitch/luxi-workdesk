@@ -1987,8 +1987,8 @@ function getAllLocalData(){
   var data = {};
   for(var i = 0; i < localStorage.length; i++){
     var k = localStorage.key(i);
-    // 排除token，不上传到云端（安全考虑）
-    if(k && k.indexOf('lu_') === 0 && k !== 'lu_gh_token') data[k] = localStorage.getItem(k);
+    // 排除token和本地同步设置，不上传到云端（安全+每设备独立设置）
+    if(k && k.indexOf('lu_') === 0 && k !== 'lu_gh_token' && k !== 'lu_realtime_sync') data[k] = localStorage.getItem(k);
   }
   return data;
 }
@@ -2086,6 +2086,7 @@ function autoSyncToggle(){
   if(realtimeSyncEnabled){
     // 关闭实时同步
     realtimeSyncEnabled = false;
+    DB.set('realtime_sync', false);
     if(realtimeSyncTimer){ clearTimeout(realtimeSyncTimer); realtimeSyncTimer = null; }
     btn.textContent = '⚡ 实时同步：关闭';
     btn.classList.remove('btn-primary');
@@ -2096,6 +2097,7 @@ function autoSyncToggle(){
     // 开启实时同步：数据变更后自动上传
     if(!getGHToken()){ toast('请先输入 GitHub Token'); return; }
     realtimeSyncEnabled = true;
+    DB.set('realtime_sync', true);
     btn.textContent = '⚡ 实时同步：开启';
     btn.classList.remove('btn-outline');
     btn.classList.add('btn-primary');
@@ -2103,6 +2105,27 @@ function autoSyncToggle(){
     // 立即上传一次
     syncUpload(true);
     setSyncStatus('⚡ 实时同步已开启 · 数据变更自动上传', 'var(--green)');
+  }
+}
+
+// 页面加载时恢复实时同步开关状态
+function restoreRealtimeSyncState(){
+  var saved = DB.get('realtime_sync', false);
+  var btn = document.getElementById('autoSyncBtn');
+  if(!btn) return;
+  if(saved && getGHToken()){
+    // 之前开过，且有token，自动恢复
+    realtimeSyncEnabled = true;
+    btn.textContent = '⚡ 实时同步：开启';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-primary');
+    return true;
+  } else {
+    realtimeSyncEnabled = false;
+    btn.textContent = '⚡ 实时同步：关闭';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline');
+    return false;
   }
 }
 
@@ -2136,7 +2159,9 @@ renderIdeas();
 renderLife();
 renderOverview();
 checkTokenExists();
-// 2. 如果有token，后台静默拉取云端最新数据，拉到就自动刷新
+// 2. 恢复实时同步开关状态（从localStorage读取，避免刷新后丢失）
+restoreRealtimeSyncState();
+// 3. 如果有token，后台静默拉取云端最新数据，拉到就自动刷新
 if(getGHToken()){
   checkSyncStatus();
   // 开机自动拉取（静默，不弹toast）
