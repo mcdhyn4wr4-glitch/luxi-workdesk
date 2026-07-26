@@ -628,9 +628,12 @@ button{cursor:pointer}
         <textarea class="textarea" id="lifeGratitude" placeholder="1.&#10;2.&#10;3." style="min-height:70px"></textarea>
         <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
           <button class="btn btn-outline" style="flex:1" onclick="saveLife()">保存今日记录</button>
-          <button id="lifeVoiceBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeVoice()">语音输入</button>
+          <button id="lifeVoiceBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeVoice()">语音转文字</button>
+          <button id="lifeRecordBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeRecord()">录语音</button>
         </div>
         <div id="lifeVoiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止</div>
+        <div id="lifeRecordStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止保存</div>
+        <div id="lifeAudioList" style="margin-top:var(--space-2)"></div>
       </div>
       <div class="section-label">往期记录</div>
       <div id="lifeHistory"></div>
@@ -1425,6 +1428,94 @@ function startVoice(){
 function stopVoice(){
   if(voiceRecognition){ voiceRecognition.stop(); }
 }
+
+/* ==================== 语音录制保存（不转文字） ==================== */
+var lifeMediaRecorder = null;
+var lifeAudioChunks = [];
+var lifeRecording = false;
+
+function toggleLifeRecord(){
+  if(lifeRecording){ stopLifeRecord(); } else { startLifeRecord(); }
+}
+
+function startLifeRecord(){
+  if(!navigator.mediaDB || !navigator.mediaDevices){
+    toast('浏览器不支持录音，试试Safari或Chrome');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    lifeAudioChunks = [];
+    lifeMediaRecorder = new MediaRecorder(stream);
+    lifeMediaRecorder.ondataavailable = function(e){
+      if(e.data.size > 0) lifeAudioChunks.push(e.data);
+    };
+    lifeMediaRecorder.onstop = function(){
+      var blob = new Blob(lifeAudioChunks, {type:'audio/webm'});
+      var reader = new FileReader();
+      reader.onload = function(){
+        // 保存到当天生活记录
+        var key = todayKey();
+        var life = DB.get('life_'+key, {mood:'',event:'',feel:'',gratitude:'',audios:[]});
+        if(!life.audios) life.audios = [];
+        var audioData = reader.result;
+        // 限制最多存5条语音（避免localStorage爆满）
+        if(life.audios.length >= 5){
+          toast('今天语音已满5条，删掉旧的再录');
+          return;
+        }
+        life.audios.push({data:audioData, time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+        DB.set('life_'+key, life);
+        renderLifeAudios(key);
+        toast('语音已保存 ✓');
+      };
+      reader.readAsDataURL(blob);
+      // 停止所有音轨
+      stream.getTracks().forEach(function(t){ t.stop(); });
+    };
+    lifeMediaRecorder.start();
+    lifeRecording = true;
+    var status = document.getElementById('lifeRecordStatus');
+    var btn = document.getElementById('lifeRecordBtn');
+    if(status) status.style.display = 'block';
+    if(btn){ btn.textContent = '停止保存'; btn.classList.remove('btn-outline'); btn.classList.add('btn-primary'); }
+    toast('开始录音...');
+  }).catch(function(err){
+    toast('录音失败：请允许麦克风权限');
+  });
+}
+
+function stopLifeRecord(){
+  if(lifeMediaRecorder && lifeMediaRecorder.state !== 'inactive'){
+    lifeMediaRecorder.stop();
+  }
+  lifeRecording = false;
+  var status = document.getElementById('lifeRecordStatus');
+  var btn = document.getElementById('lifeRecordBtn');
+  if(status) status.style.display = 'none';
+  if(btn){ btn.textContent = '录语音'; btn.classList.remove('btn-primary'); btn.classList.add('btn-outline'); }
+}
+
+function deleteLifeAudio(idx){
+  var key = todayKey();
+  var life = DB.get('life_'+key, {mood:'',event:'',feel:'',gratitude:'',audios:[]});
+  if(life.audios){ life.audios.splice(idx,1); DB.set('life_'+key, life); renderLifeAudios(key); }
+}
+
+function renderLifeAudios(key){
+  var life = DB.get('life_'+(key||todayKey()), {audios:[]});
+  var container = document.getElementById('lifeAudioList');
+  if(!container || !life.audios || life.audios.length === 0){ if(container) container.innerHTML=''; return; }
+  var html = '';
+  life.audios.forEach(function(a, i){
+    html += '<div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);padding:var(--space-2);background:var(--bg);border-radius:var(--radius-sm)">'+
+      '<span style="font-size:14px">🎙️</span>'+
+      '<audio controls style="flex:1;height:32px" src="'+a.data+'"></audio>'+
+      '<span style="font-size:11px;color:var(--text-light)">'+a.time+'</span>'+
+      '<span class="todo-del" onclick="deleteLifeAudio('+i+')">✕</span></div>';
+  });
+  container.innerHTML = html;
+}
+
 /* ==================== 生活记录渲染 ==================== */
 var currentLifeDate = todayKey();
 
@@ -1440,6 +1531,7 @@ function renderLife(){
   document.getElementById('lifeEvent').value = entry.event || '';
   document.getElementById('lifeFeel').value = entry.feel || '';
   document.getElementById('lifeGratitude').value = entry.gratitude || '';
+  renderLifeAudios(currentLifeDate);
 
   // 历史记录
   var keys = [];
@@ -1800,6 +1892,102 @@ function renderReport(){
   }
 
   html += summary;
+  html += '</div>';
+  html += '</div>';
+
+  // === 6. 习惯分析+建议 ===
+  html += '<div class="report-section">';
+  html += '<div class="report-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>习惯分析 & 建议</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:var(--space-3)">';
+
+  // 分析1: 发布节奏
+  var publishDays = 0;
+  dates.forEach(function(dateKey){
+    var plan = DB.get('plan_'+dateKey, {});
+    if(plan.track){
+      ACCOUNTS.forEach(function(acc){
+        if(plan.track[acc+'_dy']==='✅' || plan.track[acc+'_xhs']==='✅'){ publishDays++; }
+      });
+    }
+  });
+  var publishRate = dates.length > 0 ? Math.round(publishDays/dates.length*100) : 0;
+  html += '<div style="padding:var(--space-3);background:var(--bg-subtle);border-radius:var(--radius-md);border-left:3px solid var(--blue)">';
+  html += '<div style="font-size:13px;font-weight:var(--fw-semibold);margin-bottom:var(--space-1)">📊 发布节奏</div>';
+  if(publishRate >= 80){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">发布率 <b>'+publishRate+'%</b>，非常稳定！你已经是高产创作者了。建议：保持节奏，同时关注内容质量而非数量。</div>';
+  } else if(publishRate >= 50){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">发布率 <b>'+publishRate+'%</b>，还不错但可以更好。建议：尝试固定发布时间（如每天下午4点），养成习惯后会更轻松。</div>';
+  } else if(publishRate > 0){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">发布率 <b>'+publishRate+'%</b>，偏低。建议：先定个小目标——每天至少发1条，哪怕简单的也行，先养习惯再提质量。</div>';
+  } else {
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">'+rangeLabel+'还没有发布记录。建议：在计划页标记发布状态，先从一条开始。</div>';
+  }
+  html += '</div>';
+
+  // 分析2: 三账号平衡
+  var accCounts = {luxe:0, home:0, slow:0};
+  dates.forEach(function(dateKey){
+    var plan = DB.get('plan_'+dateKey, {});
+    if(plan.track){
+      ACCOUNTS.forEach(function(acc){
+        if(plan.track[acc+'_dy']==='✅') accCounts[acc]++;
+        if(plan.track[acc+'_xhs']==='✅') accCounts[acc]++;
+      });
+    }
+  });
+  var maxAcc = '', minAcc = '', maxVal = 0, minVal = 999;
+  ACCOUNTS.forEach(function(acc){
+    if(accCounts[acc] > maxVal){ maxVal = accCounts[acc]; maxAcc = acc; }
+    if(accCounts[acc] < minVal){ minVal = accCounts[acc]; minAcc = acc; }
+  });
+  html += '<div style="padding:var(--space-3);background:var(--bg-subtle);border-radius:var(--radius-md);border-left:3px solid var(--green)">';
+  html += '<div style="font-size:13px;font-weight:var(--fw-semibold);margin-bottom:var(--space-1)">⚖️ 三账号平衡</div>';
+  if(maxVal === 0){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">还没有发布数据。建议：三个账号交替发布，避免只更一个。</div>';
+  } else {
+    var gap = maxVal - minVal;
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">';
+    html += '鹿溪风 '+accCounts.luxe+'条 · 鹿住新家 '+accCounts.home+'条 · 鹿慢慢 '+accCounts.slow+'条。';
+    if(gap <= 2){ html += '三个号比较均衡，继续保持！'; }
+    else if(gap <= 5){ html += '略有偏重，<b>'+ACC_NAMES[maxAcc]+'</b>发得多。建议：适当多更<b>'+ACC_NAMES[minAcc]+'</b>。'; }
+    else { html += '严重不均，<b>'+ACC_NAMES[maxAcc]+'</b>发太多，<b>'+ACC_NAMES[minAcc]+'</b>太少。建议：本周重点更<b>'+ACC_NAMES[minAcc]+'</b>。'; }
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 分析3: 待办完成率
+  html += '<div style="padding:var(--space-3);background:var(--bg-subtle);border-radius:var(--radius-md);border-left:3px solid var(--accent)">';
+  html += '<div style="font-size:13px;font-weight:var(--fw-semibold);margin-bottom:var(--space-1)">🎯 计划执行力</div>';
+  if(allTotal === 0){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">还没有记录待办。建议：每天晨间填「三件最重要的事」，完成一个打一个勾。</div>';
+  } else if(donePct >= 80){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">完成率 <b>'+donePct+'%</b>，执行力很强！建议：偶尔没完成也别有压力，保持弹性更重要。</div>';
+  } else if(donePct >= 50){
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">完成率 <b>'+donePct+'%</b>，一半以上。建议：看看没完成的是不是太多了？每天3件最重要的事就够，别列太多。</div>';
+  } else {
+    html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">完成率 <b>'+donePct+'%</b>，偏低。建议：可能计划过多，试试每天只列3件必须做的，完成再列新的。</div>';
+  }
+  html += '</div>';
+
+  // 分析4: 活跃度
+  html += '<div style="padding:var(--space-3);background:var(--bg-subtle);border-radius:var(--radius-md);border-left:3px solid var(--pink)">';
+  html += '<div style="font-size:13px;font-weight:var(--fw-semibold);margin-bottom:var(--space-1)">📝 记录习惯</div>';
+  var ideaPerDay = rangeIdeas.length > 0 && dates.length > 0 ? (rangeIdeas.length/dates.length).toFixed(1) : 0;
+  var lifePerDay = lifeDays > 0 && dates.length > 0 ? (lifeDays/dates.length*100).toFixed(0) : 0;
+  html += '<div style="font-size:12px;line-height:1.6;color:var(--text-mid)">';
+  html += '灵感日均 '+ideaPerDay+'条，生活日记覆盖率 '+lifePerDay+'%。';
+  if(rangeIdeas.length === 0 && lifeDays === 0){
+    html += '建议：灵感和生活记录是创作源泉，随手记就好，不用写好。';
+  } else if(rangeIdeas.length < 3 && dates.length >= 7){
+    html += '灵感偏少。建议：不用等「好灵感」，碎片想法也记下来，积少成多。';
+  } else if(lifeDays < dates.length * 0.3){
+    html += '生活记录偏少。建议：哪怕一句话也行，养成每天记的习惯。';
+  } else {
+    html += '记录习惯不错，继续保持！';
+  }
+  html += '</div>';
+  html += '</div>';
+
   html += '</div>';
   html += '</div>';
 
