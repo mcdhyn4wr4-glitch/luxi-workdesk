@@ -1174,6 +1174,7 @@ var workflowPhase = 'morning'; // morning / evening
 var MORNING_STEPS = [
   { key:'look', text:'看一眼今日选题推荐', hint:'选题页顶部' },
   { key:'top3', text:'填今日三件最重要的事', hint:'往下滚一点' },
+  { key:'topic', text:'推进今日选题进度', hint:'写脚本 / 拍摄 / 发布' },
   { key:'track', text:'确认今天要发哪些平台', hint:'发布追踪表' }
 ];
 var EVENING_STEPS = [
@@ -1466,15 +1467,16 @@ function cycleStatus(key){
   DB.set('topic_status', statuses);
   renderTopics();
   toast('状态 → ' + STATUS_LIST[idx].label);
-  // 如果变成已发，自动同步到今天的发布追踪
-  if(STATUS_LIST[idx].v === 'done'){
-    syncDoneTopicToPlan(key);
+  // 选题进入工作状态(脚本/拍摄/已发)时，自动同步到今日工作流
+  var newStatus = STATUS_LIST[idx].v;
+  if(newStatus === 'script' || newStatus === 'shoot' || newStatus === 'done'){
+    syncTopicToWorkflow(key, newStatus);
   }
   scheduleRealtimeSync();
 }
 
-/* 已完成的选题自动同步到每日发布追踪 */
-function syncDoneTopicToPlan(topicKey){
+/* 选题��态推进时自动同步到今日工作流 */
+function syncTopicToWorkflow(topicKey, status){
   // topicKey 格式: luxe_3
   var parts = topicKey.split('_');
   if(parts.length !== 2) return;
@@ -1482,15 +1484,34 @@ function syncDoneTopicToPlan(topicKey){
   var idx = parseInt(parts[1]);
   var topic = TOPICS[acc].topics[idx];
   if(!topic) return;
-  // 同步到今天的计划 - 抖音和小红书都标记为已发
   var key = todayKey();
   var plan = DB.get('plan_'+key, { top3:[], todos:[], track:{}, data:{}, note:'' });
   if(!plan.track) plan.track = {};
-  plan.track[acc+'_dy'] = '✅';
-  plan.track[acc+'_xhs'] = '✅';
-  DB.set('plan_'+key, plan);
-  toast(ACC_NAMES[acc]+' · 已同步到今日发布追踪 ✓');
+  var w = getWorkflow();
+  if(!w.morning) w.morning = {};
+
+  if(status === 'done'){
+    // 已发：抖音+小红书都标记为已发，并勾选工作流步骤
+    plan.track[acc+'_dy'] = '✅';
+    plan.track[acc+'_xhs'] = '✅';
+    w.morning.topic = true;
+    w.morning.track = true;
+    DB.set('plan_'+key, plan);
+    saveWorkflow(w);
+    toast(ACC_NAMES[acc]+' · 已同步到今日发布追踪 ✓');
+    renderWorkflow();
+  } else if(status === 'script' || status === 'shoot'){
+    // 脚本/拍摄：勾选"推进今日选题进度"，提醒在工作流中体现当天有活干
+    w.morning.topic = true;
+    saveWorkflow(w);
+    var label = status === 'script' ? '脚本进行中' : '拍摄进行中';
+    toast(ACC_NAMES[acc]+' · '+label+'，已计入今日工作 ✓');
+    renderWorkflow();
+  }
 }
+
+/* 兼容旧调用 */
+function syncDoneTopicToPlan(topicKey){ syncTopicToWorkflow(topicKey, 'done'); }
 
 /* ==================== 灵感记录渲染 ==================== */
 function renderIdeas(){
@@ -2868,7 +2889,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.1';
+  var CURRENT_VERSION = '3.2';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
