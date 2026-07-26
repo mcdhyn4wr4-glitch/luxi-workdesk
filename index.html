@@ -1372,11 +1372,13 @@ function generateDaily(forceRefresh){
   var saved = DB.get('daily_rec', null);
   if(saved && saved.day === dayKey && !forceRefresh) return saved;
 
-  var seed = getDaySeed();
+  var blacklist = DB.get('topic_blacklist', {}); // { 'luxe_3': true, 'home_5': true }
   var result = { day: dayKey, candidates: {}, selected: {} };
 
   ACCOUNTS.forEach(function(acc){
     var scored = scoreTopics(acc, TOPICS[acc].topics);
+    // 过滤掉黑名单里的选题
+    scored = scored.filter(function(c){ return !blacklist[acc+'_'+c.idx]; });
     var unused = scored.filter(function(c){ return c.status === 'idea'; });
     var pool = unused.length >= 5 ? unused : (unused.length >= 3 ? unused : scored);
 
@@ -1384,46 +1386,83 @@ function generateDaily(forceRefresh){
     var candidates = pool.slice(0, 5);
     result.candidates[acc] = candidates;
 
-    // 默认选定第一个（最高分的）
-    result.selected[acc] = candidates.length > 0 ? candidates[0].idx : -1;
-
-    seed += 31;
+    // 默认不选定（推荐只是参考，用户自己选）
+    result.selected[acc] = -1;
   });
 
   DB.set('daily_rec', result);
   return result;
 }
 
-// 用户切换选定选题
+// 用户切换选定选题（可选做标记，不是必须）
 function selectDailyTopic(acc, idx){
   var rec = generateDaily(false);
-  rec.selected[acc] = idx;
+  // 再次点击取消选定
+  if(rec.selected[acc] === idx){
+    rec.selected[acc] = -1;
+  } else {
+    rec.selected[acc] = idx;
+  }
   DB.set('daily_rec', rec);
   renderDaily();
+}
+
+// 标记选题为「不要」——永久加入黑名单，不再推荐
+function rejectTopic(acc, idx, evt){
+  if(evt) evt.stopPropagation(); // 防止触发选题卡片的点击
+  var blacklist = DB.get('topic_blacklist', {});
+  blacklist[acc+'_'+idx] = true;
+  DB.set('topic_blacklist', blacklist);
+
+  // 从当前候选里移除，补充一个新的
+  var rec = generateDaily(false);
+  var candidates = rec.candidates[acc] || [];
+  rec.candidates[acc] = candidates.filter(function(c){ return c.idx !== idx; });
+
+  // 补充新候选
+  if(rec.candidates[acc].length < 5){
+    var scored = scoreTopics(acc, TOPICS[acc].topics);
+    scored = scored.filter(function(c){
+      return !blacklist[acc+'_'+c.idx] && // 不在黑名单
+        rec.candidates[acc].findIndex(function(x){ return x.idx === c.idx; }) === -1; // 不在当前候选
+    });
+    while(rec.candidates[acc].length < 5 && scored.length > 0){
+      rec.candidates[acc].push(scored.shift());
+    }
+  }
+
+  // 如果当前选定的被移除了，清除选定
+  if(rec.selected[acc] === idx) rec.selected[acc] = -1;
+
+  DB.set('daily_rec', rec);
+  renderDaily();
+  toast('已移除，不再推荐这个选题 ❌');
 }
 
 // 换一批候选（重新生成今天的候选，排除当前已选定的）
 function refreshDailyCandidates(acc){
   var rec = generateDaily(false);
+  var blacklist = DB.get('topic_blacklist', {});
   var scored = scoreTopics(acc, TOPICS[acc].topics);
+  // 过滤黑名单
+  scored = scored.filter(function(c){ return !blacklist[acc+'_'+c.idx]; });
   var currentSelected = rec.selected[acc];
   var currentCandidates = (rec.candidates[acc] || []).map(function(c){ return c.idx; });
 
-  // 从候选池排除当前已选定的，再选5个新的
+  // 从候选池排除当前的，再选5个新的
   var newPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) === -1; });
   if(newPool.length < 5){
-    // 不够5个，补充一些之前的
     var oldPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) !== -1 && c.idx !== currentSelected; });
     newPool = newPool.concat(oldPool);
   }
   var newCandidates = newPool.slice(0, 5);
   rec.candidates[acc] = newCandidates;
-  
-  // 如果当前选定的不在新候选里，重新选定第一个
-  if(newCandidates.length > 0 && newCandidates.findIndex(function(c){ return c.idx === currentSelected; }) === -1){
-    rec.selected[acc] = newCandidates[0].idx;
+
+  // 如果当前选定的不在新候选里，清除选定
+  if(currentSelected >= 0 && newCandidates.findIndex(function(c){ return c.idx === currentSelected; }) === -1){
+    rec.selected[acc] = -1;
   }
-  
+
   DB.set('daily_rec', rec);
   renderDaily();
   toast('已换一批候选 🔄');
@@ -1477,12 +1516,19 @@ function renderDaily(){
   ACCOUNTS.forEach(function(acc){
     var candidates = rec.candidates[acc] || [];
     var selectedIdx = rec.selected[acc];
-    if(candidates.length === 0) return;
+    if(candidates.length === 0){
+      html += '<div style="margin-bottom:14px">';
+      html += '<div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px">'+names[acc]+'</div>';
+      html += '<div class="report-empty">暂无可用选题，去选题库看看</div>';
+      html += '<button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:4px 8px" onclick="jumpToTopic(\''+acc+'\',0)">📚 去选题库</button>';
+      html += '</div>';
+      return;
+    }
 
     html += '<div style="margin-bottom:14px">';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
     html += '<span style="font-size:12px;font-weight:600;color:var(--primary)">'+names[acc]+'</span>';
-    html += '<span style="font-size:10px;color:var(--text-light)">点选今日要做的</span>';
+    html += '<span style="font-size:10px;color:var(--text-light)">点击选题标记要做的 · ❌不要的会移除</span>';
     html += '</div>';
 
     candidates.forEach(function(pick, pi){
@@ -1490,11 +1536,13 @@ function renderDaily(){
       var stObj = STATUS_LIST.find(function(s){ return s.v === pick.status; });
       var tagCls = 'tag-' + pick.topic.tag;
 
-      html += '<div class="topic-item" style="padding:9px 11px;margin-bottom:5px;cursor:pointer;' + (isSelected ? 'border:2px solid var(--primary);background:var(--primary-bg)' : '') + '" onclick="selectDailyTopic(\''+acc+'\','+pick.idx+')">';
-      html += '<div class="topic-head"><div class="topic-title" style="font-size:13px">' + (isSelected ? '✅ ' : '') + pick.topic.t + '</div>';
+      html += '<div class="topic-item" style="padding:9px 11px;margin-bottom:5px;cursor:pointer;position:relative;' + (isSelected ? 'border:2px solid var(--primary);background:var(--primary-bg)' : '') + '" onclick="selectDailyTopic(\''+acc+'\','+pick.idx+')">';
+      html += '<div class="topic-head"><div class="topic-title" style="font-size:13px;padding-right:24px">' + (isSelected ? '✅ ' : '') + pick.topic.t + '</div>';
       html += '<div class="topic-status '+stObj.cls+'" style="font-size:14px">'+stObj.icon+'</div></div>';
       html += '<div class="topic-meta" style="margin-top:2px"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
       html += '<div class="topic-platforms" style="margin-top:3px;font-size:10px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
+      // 不要按钮
+      html += '<div onclick="rejectTopic(\''+acc+'\','+pick.idx+',event)" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#f0ddd8;color:#c55;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer">✕</div>';
       html += '</div>';
     });
 
@@ -1505,7 +1553,7 @@ function renderDaily(){
     html += '</div>';
   });
 
-  html += '<div style="font-size:10px;color:#bbb;text-align:center;margin-top:4px">每个账号5个候选 · 点击选择今日要做的</div>';
+  html += '<div style="font-size:10px;color:#bbb;text-align:center;margin-top:4px">推荐仅供参考 · 你实际发什么自己定</div>';
 
   document.getElementById('dailyRecommend').innerHTML = html;
 }
