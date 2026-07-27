@@ -612,7 +612,7 @@ button{cursor:pointer}
           <div class="subtab" onclick="switchAccount('home')">鹿住新家</div>
           <div class="subtab" onclick="switchAccount('slow')">鹿慢慢</div>
         </div>
-        <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
+        <div id="topicFilterTabs" style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
           <div class="subtab active" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('all',event)">选题库</div>
           <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('active',event)">进行中</div>
           <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('done',event)">已完成</div>
@@ -830,7 +830,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.8 · 侧边栏同步/更多入口
+        鹿系工作台 · v3.9 · 修复进行中筛选
       </div>
     </div>
 
@@ -1240,12 +1240,15 @@ function switchAccount(acc, evt){
 }
 
 function switchTopicFilter(filter, evt){
+  if(evt) evt.stopPropagation();
   currentTopicFilter = filter;
-  // 只清筛选tab的active
-  var filterTabs = document.querySelectorAll('#page-topics > div[style*="display:flex"] .subtab');
+  // 用精确 id 清掉所有筛选 tab 的 active，再按 filter 值高亮对应 tab
+  var filterTabs = document.querySelectorAll('#topicFilterTabs .subtab');
   filterTabs.forEach(function(t){ t.classList.remove('active'); });
-  var e = evt || window.event;
-  if(e && e.currentTarget){ e.currentTarget.classList.add('active'); }
+  filterTabs.forEach(function(t){
+    var oc = t.getAttribute('onclick') || '';
+    if(oc.indexOf("'"+filter+"'") !== -1){ t.classList.add('active'); }
+  });
   renderTopics();
 }
 
@@ -3263,7 +3266,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.8';
+  var CURRENT_VERSION = '3.9';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
