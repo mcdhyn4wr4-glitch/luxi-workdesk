@@ -820,7 +820,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.6 · 已完成选题不再重复推荐
+        鹿系工作台 · v3.7 · 推荐可折叠
       </div>
     </div>
 
@@ -2507,6 +2507,7 @@ function generateWeekly(forceRefresh){
 function renderDaily(){
   var rec = generateDaily(false);
   var names = { luxe:'🌸 鹿溪风', home:'🏠 鹿住新家', slow:'🌿 鹿慢慢' };
+  var expanded = DB.get('daily_expanded', { luxe:false, home:false, slow:false });
 
   // 日标签
   var dayLabel = '';
@@ -2518,46 +2519,64 @@ function renderDaily(){
   ACCOUNTS.forEach(function(acc){
     var candidates = rec.candidates[acc] || [];
     var selectedIdx = rec.selected[acc];
+    var isOpen = expanded[acc];
+    var selectedMark = (selectedIdx >= 0) ? ' · 已选 1 个' : '';
+    var countLabel = candidates.length + ' 个候选' + selectedMark;
+
+    html += '<div class="card" style="margin-bottom:var(--space-2);overflow:hidden">';
+    // 可点击的标题栏
+    html += '<div onclick="toggleDailyAccount(\''+acc+'\')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:var(--space-2) var(--space-3)">';
+    html += '<div style="display:flex;align-items:center;gap:var(--space-2)">';
+    html += '<span style="font-size:14px;font-weight:var(--fw-semibold);color:var(--primary)">'+names[acc]+'</span>';
+    html += '<span style="font-size:11px;color:var(--text-light)">'+countLabel+'</span>';
+    html += '</div>';
+    html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--text-light);transition:transform 0.2s;transform:'+(isOpen?'rotate(180deg)':'rotate(0)')+'"><path d="M6 9l6 6 6-6"/></svg>';
+    html += '</div>';
+    // 选题列表（可折叠）
+    html += '<div id="dailyAcc_'+acc+'" style="padding:0 var(--space-3) '+(isOpen?'var(--space-3)':'0')+';transition:all 0.25s;'+(isOpen?'':'max-height:0;overflow:hidden')+'">';
+
     if(candidates.length === 0){
-      html += '<div style="margin-bottom:14px">';
-      html += '<div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px">'+names[acc]+'</div>';
-      html += '<div class="report-empty">暂无可用选题，去选题库看看</div>';
-      html += '<button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:4px 8px" onclick="jumpToTopic(\''+acc+'\',0)">📚 去选题库</button>';
+      html += '<div class="report-empty" style="margin-bottom:var(--space-2)">暂无可用选题，去选题库看看</div>';
+      html += '<button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:4px 8px;margin-bottom:var(--space-2)" onclick="jumpToTopic(\''+acc+'\',0)">📚 去选题库</button>';
+    } else {
+      html += '<div style="font-size:10px;color:var(--text-light);margin-bottom:6px">点击选题标记要做的 · ❌不要的会移除</div>';
+      candidates.forEach(function(pick, pi){
+        var isSelected = (pick.idx === selectedIdx);
+        var stObj = STATUS_LIST.find(function(s){ return s.v === pick.status; });
+        var tagCls = 'tag-' + pick.topic.tag;
+
+        html += '<div class="topic-item" style="padding:9px 11px;margin-bottom:5px;cursor:pointer;position:relative;' + (isSelected ? 'border:2px solid var(--primary);background:var(--primary-bg)' : '') + '" onclick="selectDailyTopic(\''+acc+'\','+pick.idx+')">';
+        html += '<div class="topic-head"><div class="topic-title" style="font-size:13px;padding-right:24px">' + (isSelected ? '✅ ' : '') + pick.topic.t + '</div>';
+        html += '<div class="topic-status '+stObj.cls+'" style="font-size:14px">'+stObj.icon+'</div></div>';
+        html += '<div class="topic-meta" style="margin-top:2px"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
+        html += '<div class="topic-platforms" style="margin-top:3px;font-size:10px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
+        // 不要按钮
+        html += '<div onclick="rejectTopic(\''+acc+'\','+pick.idx+',event)" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--accent-100);color:var(--accent-700);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer">✕</div>';
+        html += '</div>';
+      });
+
+      html += '<div style="display:flex;gap:6px;margin-top:6px;margin-bottom:var(--space-2)">';
+      html += '<button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px 8px" onclick="refreshDailyCandidates(\''+acc+'\')">🔄 换一批</button>';
+      html += '<button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px 8px" onclick="jumpToTopic(\''+acc+'\','+(selectedIdx >= 0 ? selectedIdx : 0)+')">📚 去选题库</button>';
       html += '</div>';
-      return;
     }
 
-    html += '<div style="margin-bottom:14px">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
-    html += '<span style="font-size:12px;font-weight:600;color:var(--primary)">'+names[acc]+'</span>';
-    html += '<span style="font-size:10px;color:var(--text-light)">点击选题标记要做的 · ❌不要的会移除</span>';
-    html += '</div>';
-
-    candidates.forEach(function(pick, pi){
-      var isSelected = (pick.idx === selectedIdx);
-      var stObj = STATUS_LIST.find(function(s){ return s.v === pick.status; });
-      var tagCls = 'tag-' + pick.topic.tag;
-
-      html += '<div class="topic-item" style="padding:9px 11px;margin-bottom:5px;cursor:pointer;position:relative;' + (isSelected ? 'border:2px solid var(--primary);background:var(--primary-bg)' : '') + '" onclick="selectDailyTopic(\''+acc+'\','+pick.idx+')">';
-      html += '<div class="topic-head"><div class="topic-title" style="font-size:13px;padding-right:24px">' + (isSelected ? '✅ ' : '') + pick.topic.t + '</div>';
-      html += '<div class="topic-status '+stObj.cls+'" style="font-size:14px">'+stObj.icon+'</div></div>';
-      html += '<div class="topic-meta" style="margin-top:2px"><span class="tag '+tagCls+'">'+TAG_MAP[pick.topic.tag]+'</span></div>';
-      html += '<div class="topic-platforms" style="margin-top:3px;font-size:10px"><span>🎬 '+pick.topic.dy+'</span><span>📕 '+pick.topic.xhs+'</span></div>';
-      // 不要按钮
-      html += '<div onclick="rejectTopic(\''+acc+'\','+pick.idx+',event)" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--accent-100);color:var(--accent-700);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer">✕</div>';
-      html += '</div>';
-    });
-
-    html += '<div style="display:flex;gap:6px;margin-top:4px">';
-    html += '<button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px 8px" onclick="refreshDailyCandidates(\''+acc+'\')">🔄 换一批</button>';
-    html += '<button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px 8px" onclick="jumpToTopic(\''+acc+'\','+(selectedIdx >= 0 ? selectedIdx : 0)+')">📚 去选题库</button>';
-    html += '</div>';
-    html += '</div>';
+    html += '</div>'; // 折叠内容
+    html += '</div>'; // 卡片
   });
 
   html += '<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">推荐仅供参考 · 你实际发什么自己定</div>';
 
   document.getElementById('dailyRecommend').innerHTML = html;
+}
+
+// 切换每日推荐账号折叠
+function toggleDailyAccount(acc){
+  var expanded = DB.get('daily_expanded', { luxe:false, home:false, slow:false });
+  expanded[acc] = !expanded[acc];
+  DB.set('daily_expanded', expanded);
+  renderDaily();
+  scheduleRealtimeSync();
 }
 
 // 渲染本周推荐
@@ -3081,7 +3100,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.6';
+  var CURRENT_VERSION = '3.7';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
