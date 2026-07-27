@@ -753,16 +753,38 @@ button{cursor:pointer}
           <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
         </div>
         <div class="card-body">
+          <!-- 同步后端切换 -->
+          <div style="margin-bottom:var(--space-3)">
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)">同步后端（国内网络建议选 Gitee，免VPN）：</div>
+            <div style="display:flex;gap:var(--space-2)">
+              <button class="btn btn-sm" id="backendGithubBtn" onclick="switchSyncBackend('github')" style="flex:1">GitHub</button>
+              <button class="btn btn-sm" id="backendGiteeBtn" onclick="switchSyncBackend('gitee')" style="flex:1">Gitee（国内）</button>
+            </div>
+          </div>
+
+          <!-- GitHub Token 配置 -->
           <div id="tokenSection" style="margin-bottom:var(--space-3)">
-            <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)">首次使用请输入 GitHub Token（只需一次）：</div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)">GitHub Token（只需一次）：</div>
             <div style="display:flex;gap:var(--space-2)">
               <input class="input" id="ghTokenInput" placeholder="ghp_..." style="flex:1;font-size:13px" type="password">
               <button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
             </div>
           </div>
+
+          <!-- Gitee 配置 -->
+          <div id="giteeSection" style="margin-bottom:var(--space-3);display:none">
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)">Gitee 配置（<a href="https://gitee.com" target="_blank">gitee.com</a> 注册→建私有仓库→生成私人令牌）：</div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <input class="input" id="giteeOwnerInput" placeholder="Gitee 用户名" style="font-size:13px">
+              <input class="input" id="giteeRepoInput" placeholder="仓库名（如 luxi-workdesk）" style="font-size:13px">
+              <input class="input" id="giteeTokenInput" placeholder="私人令牌" style="font-size:13px" type="password">
+              <button class="btn btn-primary btn-sm" onclick="saveGiteeConfig()">保存 Gitee 配置</button>
+            </div>
+          </div>
+
           <div style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-3);line-height:1.5">
-            开启「实时同步」后，每次改动数据会自动上传到云端，其他设备点「从云端拉取」即可同步。<br>
-            建议：换设备前点一下「拉取」获取最新数据。
+            开启「实时同步」后，每次改动自动上传，其他设备打开自动拉取。<br>
+            国内用 Gitee 可免 VPN 实时同步。
           </div>
           <div id="syncStatus" style="font-size:12px;color:var(--text-light);margin-bottom:var(--space-2)"></div>
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
@@ -789,7 +811,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.0 · 支持多设备同步
+        鹿系工作台 · v3.3 · 支持多设备同步（GitHub + Gitee）
       </div>
     </div>
 
@@ -2645,7 +2667,7 @@ function clearAll(){
   renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
 }
 
-/* ==================== GitHub 云端同步 ==================== */
+/* ==================== 云端同步（支持 GitHub + Gitee 双后端） ==================== */
 var GITHUB_OWNER = 'mcdhyn4wr4-glitch';
 var GITHUB_REPO = 'luxi-workdesk';
 var GITHUB_FILE = 'data.json';
@@ -2655,10 +2677,58 @@ var realtimeSyncEnabled = false;
 var realtimeSyncTimer = null;
 var lastSyncTime = 0;
 
+/* 同步后端选择：'github' | 'gitee'。Gitee 国内直连，GitHub 海外。 */
+function getSyncBackend(){
+  return DB.get('sync_backend', 'github');
+}
+function setSyncBackend(b){
+  DB.set('sync_backend', b);
+}
+
+/* Gitee 配置：用户名/仓库/Token 都存在 localStorage，首次需填入 */
+function getGiteeConfig(){
+  return {
+    owner: DB.get('gitee_owner', ''),
+    repo: DB.get('gitee_repo', ''),
+    token: DB.get('gitee_token', '')
+  };
+}
+function setGiteeConfig(owner, repo, token){
+  DB.set('gitee_owner', owner);
+  DB.set('gitee_repo', repo);
+  DB.set('gitee_token', token);
+}
+function giteeConfigured(){
+  var c = getGiteeConfig();
+  return c.owner && c.repo && c.token;
+}
+
+/* 统一的同步 API 端点（根据后端返回） */
+function getSyncAPI(){
+  if(getSyncBackend() === 'gitee' && giteeConfigured()){
+    var c = getGiteeConfig();
+    return 'https://gitee.com/api/v5/repos/' + c.owner + '/' + c.repo + '/contents/data.json';
+  }
+  return SYNC_API; // GitHub
+}
+
+/* 统一获取认证头 */
+function getSyncAuthHeader(){
+  if(getSyncBackend() === 'gitee' && giteeConfigured()){
+    return 'token ' + getGiteeConfig().token;
+  }
+  return 'token ' + getGHToken();
+}
+
 // 实时同步：数据变更后防抖 3 秒上传一次
 function scheduleRealtimeSync(){
   if(!realtimeSyncEnabled) return;
-  if(!getGHToken()) return;
+  // 检查当前后端是否有凭证
+  if(getSyncBackend() === 'gitee'){
+    if(!giteeConfigured()) return;
+  } else {
+    if(!getGHToken()) return;
+  }
   if(realtimeSyncTimer) clearTimeout(realtimeSyncTimer);
   setSyncStatus('📝 数据已变更，准备实时同步...', 'var(--blue)');
   realtimeSyncTimer = setTimeout(function(){
@@ -2711,13 +2781,83 @@ function checkTokenExists(){
   var token = getGHToken();
   var section = document.getElementById('tokenSection');
   if(section){
-    section.style.display = token ? 'none' : 'block';
+    // GitHub 后端才显示 token 输入区
+    section.style.display = (getSyncBackend() === 'github' && !token) ? 'block' : 'none';
   }
   // 如果没有token，在总览页渲染时提示
-  if(!token && currentPage === 'overview'){
+  if(!token && currentPage === 'overview' && getSyncBackend() === 'github'){
     setSyncStatus('请先输入GitHub Token', 'var(--accent)');
   }
   return !!token;
+}
+
+/* 保存 Gitee 配置 */
+function saveGiteeConfig(){
+  var owner = document.getElementById('giteeOwnerInput').value.trim();
+  var repo = document.getElementById('giteeRepoInput').value.trim();
+  var token = document.getElementById('giteeTokenInput').value.trim();
+  if(!owner || !repo || !token){ toast('请填完三项'); return; }
+  setGiteeConfig(owner, repo, token);
+  toast('Gitee 配置已保存 ✅');
+  refreshSyncBackendUI();
+  checkSyncStatus();
+  // 立即尝试拉取/上传一次
+  setTimeout(function(){ autoPullOnLoad(); }, 300);
+}
+
+/* 切换同步后端 */
+function switchSyncBackend(b){
+  setSyncBackend(b);
+  refreshSyncBackendUI();
+  toast('已切换到 ' + (b === 'gitee' ? 'Gitee（国内直连）' : 'GitHub'));
+  checkSyncStatus();
+  // 切换后立即尝试拉取
+  setTimeout(function(){ autoPullOnLoad(); }, 300);
+}
+
+/* 刷新后端切换 UI 状态 */
+function refreshSyncBackendUI(){
+  var backend = getSyncBackend();
+  var ghBtn = document.getElementById('backendGithubBtn');
+  var geBtn = document.getElementById('backendGiteeBtn');
+  var tokenSec = document.getElementById('tokenSection');
+  var giteeSec = document.getElementById('giteeSection');
+  if(ghBtn){
+    if(backend === 'github'){ ghBtn.classList.remove('btn-outline'); ghBtn.classList.add('btn-primary'); }
+    else { ghBtn.classList.add('btn-outline'); ghBtn.classList.remove('btn-primary'); }
+  }
+  if(geBtn){
+    if(backend === 'gitee'){ geBtn.classList.remove('btn-outline'); geBtn.classList.add('btn-primary'); }
+    else { geBtn.classList.add('btn-outline'); geBtn.classList.remove('btn-primary'); }
+  }
+  // 显示对应配置区
+  if(tokenSec) tokenSec.style.display = (backend === 'github' && !getGHToken()) ? 'block' : 'none';
+  if(giteeSec) giteeSec.style.display = (backend === 'gitee' && !giteeConfigured()) ? 'block' : 'none';
+  // 如果是 gitee 且已配置，回填表单（方便修改）
+  if(backend === 'gitee' && giteeConfigured()){
+    var c = getGiteeConfig();
+    var oi = document.getElementById('giteeOwnerInput'); if(oi) oi.value = c.owner;
+    var ri = document.getElementById('giteeRepoInput'); if(ri) ri.value = c.repo;
+  }
+}
+
+/* 手动导入数据文件 */
+function importLocalData(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var data = JSON.parse(e.target.result);
+      restoreLocalData(data);
+      renderWorkflow(); renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
+      toast('数据导入成功 ✅');
+    } catch(err){
+      toast('导入失败：文件格式错误');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
 function getAllLocalData(){
@@ -2748,19 +2888,26 @@ function setSyncStatus(msg, color){
 }
 
 function syncUpload(silent){
-  if(!checkTokenExists()){ if(!silent) toast('请先输入GitHub Token'); return; }
+  var backend = getSyncBackend();
+  if(backend === 'gitee'){
+    if(!giteeConfigured()){ if(!silent) toast('请先配置 Gitee'); return; }
+  } else {
+    if(!checkTokenExists()){ if(!silent) toast('请先输入GitHub Token'); return; }
+  }
   var data = getAllLocalData();
   if(Object.keys(data).length === 0){
     if(!silent) toast('没有数据可上传');
     return;
   }
   if(!silent) setSyncStatus('正在上传...', 'var(--blue)');
+  var api = getSyncAPI();
+  var auth = getSyncAuthHeader();
   var content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
 
   // 先获取当前文件的sha（如果存在）
-  fetch(SYNC_API, {
+  fetch(api, {
     method: 'GET',
-    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+    headers: { 'Authorization': auth, 'Accept': 'application/json' }
   }).then(function(r){
     if(r.status === 404) return null;
     return r.json();
@@ -2770,17 +2917,20 @@ function syncUpload(silent){
       content: content
     };
     if(existing && existing.sha) body.sha = existing.sha;
+    // Gitee 需要 access_token 参数
+    if(backend === 'gitee') body.access_token = getGiteeConfig().token;
 
-    return fetch(SYNC_API, {
+    return fetch(api + (backend === 'gitee' ? '' : ''), {
       method: 'PUT',
-      headers: { 'Authorization': 'token ' + getGHToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(body)
     });
   }).then(function(r){ return r.json(); }).then(function(result){
-    if(result && result.content){
+    if(result && (result.content || result.commit)){
       lastSyncTime = Date.now();
       var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-      setSyncStatus('✅ 已同步 · ' + time + (realtimeSyncEnabled ? ' · 实时同步中' : ''), 'var(--green)');
+      var bkLabel = backend === 'gitee' ? 'Gitee' : 'GitHub';
+      setSyncStatus('✅ 已同步 · ' + time + ' · ' + bkLabel + (realtimeSyncEnabled ? ' · 实时同步中' : ''), 'var(--green)');
       if(!silent) toast('数据已上传到云端 ☁️');
     } else {
       setSyncStatus('❌ 上传失败: ' + (result.message || '未知错误'), 'var(--pink-700)');
@@ -2793,11 +2943,18 @@ function syncUpload(silent){
 }
 
 function syncDownload(){
-  if(!checkTokenExists()){ toast('请先输入GitHub Token'); return; }
+  var backend = getSyncBackend();
+  if(backend === 'gitee'){
+    if(!giteeConfigured()){ toast('请先配置 Gitee'); return; }
+  } else {
+    if(!checkTokenExists()){ toast('请先输入GitHub Token'); return; }
+  }
   setSyncStatus('正在从云端拉取...', 'var(--blue)');
-  fetch(SYNC_API, {
+  var api = getSyncAPI();
+  var auth = getSyncAuthHeader();
+  fetch(api, {
     method: 'GET',
-    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+    headers: { 'Authorization': auth, 'Accept': 'application/json' }
   }).then(function(r){
     if(r.status === 404){ setSyncStatus('云端还没有数据，先上传一次', 'var(--text-light)'); throw new Error('no data'); }
     return r.json();
@@ -2868,10 +3025,17 @@ function restoreRealtimeSyncState(){
 
 // 页面加载时检查云端是否有数据，显示同步状态
 function checkSyncStatus(){
+  var backend = getSyncBackend();
+  if(backend === 'gitee' && !giteeConfigured()){
+    setSyncStatus('未配置 Gitee，可在设置中配置', 'var(--text-light)');
+    return;
+  }
   setSyncStatus('检查云端状态...', 'var(--text-light)');
-  fetch(SYNC_API, {
+  var api = getSyncAPI();
+  var auth = getSyncAuthHeader();
+  fetch(api, {
     method: 'GET',
-    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+    headers: { 'Authorization': auth, 'Accept': 'application/json' }
   }).then(function(r){
     if(r.status === 404){ setSyncStatus('云端暂无数据，建议上传一次', 'var(--text-light)'); return null; }
     if(!r.ok){ setSyncStatus('云端状态: HTTP ' + r.status, 'var(--text-light)'); return null; }
@@ -2880,7 +3044,8 @@ function checkSyncStatus(){
     if(result && result.content && result.commit && result.commit.committer){
       var date = new Date(result.commit.committer.date);
       var time = date.toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      setSyncStatus('☁️ 云端最后更新: ' + time, 'var(--green)');
+      var bkLabel = backend === 'gitee' ? 'Gitee' : 'GitHub';
+      setSyncStatus('☁️ ' + bkLabel + ' 最后更新: ' + time, 'var(--green)');
     }
   }).catch(function(err){ setSyncStatus('网络错误: ' + err.message, 'var(--text-light)'); });
 }
@@ -2889,7 +3054,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.2';
+  var CURRENT_VERSION = '3.3';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
@@ -2904,9 +3069,14 @@ document.getElementById('topDate').textContent = formatDate();
 
 // 0.5 自动恢复登录状态和实时同步
 (function initSync(){
-  // 有内置token保底，永远自动开启实时同步
-  DB.set('gh_token', getGHToken());
-  DB.set('realtime_sync', true);
+  var backend = getSyncBackend();
+  if(backend === 'gitee'){
+    if(giteeConfigured()) DB.set('realtime_sync', true);
+  } else {
+    // GitHub 后端：有内置token保底，永远自动开启实时同步
+    DB.set('gh_token', getGHToken());
+    DB.set('realtime_sync', true);
+  }
 })();
 // 1. 先用本地数据立即渲染（保证页面秒开）
 checkWeeklyTopics();
@@ -2920,22 +3090,32 @@ renderOverview();
 updateDoneCount();
 updateTopbarProgress();
 checkTokenExists();
+// 1.5 刷新同步后端切换 UI（GitHub/Gitee）
+refreshSyncBackendUI();
 // 2. 恢复实时同步开关状态
 restoreRealtimeSyncState();
 // 3. 后台静默拉取云端最新数据，拉到就自动刷新
-if(getGHToken()){
-  checkSyncStatus();
-  setTimeout(function(){ autoPullOnLoad(); }, 500);
-}
+(function initCloudPull(){
+  var backend = getSyncBackend();
+  var canSync = (backend === 'gitee') ? giteeConfigured() : !!getGHToken();
+  if(canSync){
+    checkSyncStatus();
+    setTimeout(function(){ autoPullOnLoad(); }, 500);
+  }
+})();
 
 // 打开时静默拉取云端数据
 function autoPullOnLoad(){
-  if(!getGHToken()) return;
+  var backend = getSyncBackend();
+  var canSync = (backend === 'gitee') ? giteeConfigured() : !!getGHToken();
+  if(!canSync) return;
   // 如果有等待上传的数据（实时同步防抖中），跳过自动拉取，避免覆盖未上传的改动
   if(realtimeSyncTimer){ return; }
-  fetch(SYNC_API, {
+  var api = getSyncAPI();
+  var auth = getSyncAuthHeader();
+  fetch(api, {
     method: 'GET',
-    headers: { 'Authorization': 'token ' + getGHToken(), 'Accept': 'application/vnd.github.v3+json' }
+    headers: { 'Authorization': auth, 'Accept': 'application/json' }
   }).then(function(r){
     if(r.status === 404) return null; // 云端没数据，用本地
     if(!r.ok) return null;
@@ -2952,7 +3132,8 @@ function autoPullOnLoad(){
         restoreLocalData(cloudData);
         renderWorkflow(); renderDaily(); renderPlan(); renderTopics(); renderIdeas(); renderLife(); renderOverview();
         var time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-        setSyncStatus('✅ 已自动同步 · ' + time + ' · 实时同步中', 'var(--green)');
+        var bkLabel = backend === 'gitee' ? 'Gitee' : 'GitHub';
+        setSyncStatus('✅ 已自动同步 · ' + time + ' · ' + bkLabel + ' · 实时同步中', 'var(--green)');
       }
     } catch(e){
       console.log('自动拉取解析失败:', e);
