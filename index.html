@@ -811,7 +811,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.3 · 支持多设备同步（GitHub + Gitee）
+        鹿系工作台 · v3.4 · 实时同步默认开启
       </div>
     </div>
 
@@ -3004,12 +3004,13 @@ function autoSyncToggle(){
 
 // 页面加载时恢复实时同步开关状态
 function restoreRealtimeSyncState(){
-  var saved = DB.get('realtime_sync', false);
   var btn = document.getElementById('autoSyncBtn');
   if(!btn) return;
-  if(saved && getGHToken()){
-    // 之前开过，且有token，自动恢复
+  // 默认强制开启实时同步（有 token 就开，不再依赖手动开关）
+  var canSync = (getSyncBackend() === 'gitee') ? giteeConfigured() : !!getGHToken();
+  if(canSync){
     realtimeSyncEnabled = true;
+    DB.set('realtime_sync', true);
     btn.textContent = '⚡ 实时同步：开启';
     btn.classList.remove('btn-outline');
     btn.classList.add('btn-primary');
@@ -3054,7 +3055,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.3';
+  var CURRENT_VERSION = '3.4';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
