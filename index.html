@@ -820,7 +820,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.5 · 选题进行中卡片
+        鹿系工作台 · v3.6 · 已完成选题不再重复推荐
       </div>
     </div>
 
@@ -2373,6 +2373,9 @@ function generateDaily(forceRefresh){
     var scored = scoreTopics(acc, TOPICS[acc].topics);
     // 过滤掉黑名单里的选题
     scored = scored.filter(function(c){ return !blacklist[acc+'_'+c.idx]; });
+    // 已完成/已复盘的选题永久不再推荐
+    scored = scored.filter(function(c){ return c.status !== 'done' && c.status !== 'review'; });
+    // 优先推荐未开始的（idea），不够再补进行中的（script/shoot）
     var unused = scored.filter(function(c){ return c.status === 'idea'; });
     var pool = unused.length >= 5 ? unused : (unused.length >= 3 ? unused : scored);
 
@@ -2487,6 +2490,8 @@ function generateWeekly(forceRefresh){
 
     for(var i = 0; i < scored.length && picks.length < 3; i++){
       if(used[scored[i].idx]) continue;
+      // 已完成/已复盘的不再推荐
+      if(scored[i].status === 'done' || scored[i].status === 'review') continue;
       picks.push(scored[i]);
       used[scored[i].idx] = true;
     }
@@ -3076,7 +3081,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.5';
+  var CURRENT_VERSION = '3.6';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
