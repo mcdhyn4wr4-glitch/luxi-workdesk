@@ -564,8 +564,8 @@ button{cursor:pointer}
 
     <!-- ===== 页面1: 选题库 ===== -->
     <div class="page" id="page-topics">
-      <!-- 上方两张卡片：今日推荐 + 已完成选题 -->
-      <div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-3)">
+      <!-- 上方三张卡片：今日推荐 + 进行中 + 已完成 -->
+      <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
         <!-- 今日推荐 -->
         <div class="card card-primary" id="dailyCard" style="flex:1;cursor:pointer" onclick="scrollToDaily()">
           <div class="card-title" style="margin-bottom:var(--space-2)">
@@ -573,6 +573,14 @@ button{cursor:pointer}
           </div>
           <div style="font-size:12px;color:var(--text-light);line-height:1.5">每天3个账号各推5个选题，点击下方展开查看</div>
           <div style="margin-top:var(--space-2);font-size:11px;color:var(--accent-700);font-weight:var(--fw-medium)" id="dayLabel"></div>
+        </div>
+        <!-- 进行中选题 -->
+        <div class="card" style="flex:1;cursor:pointer;background:var(--primary-bg);border-color:var(--primary-300)" onclick="switchTopicFilter('active',event);scrollToLibrary()">
+          <div class="card-title" style="margin-bottom:var(--space-2)">
+            <span class="icon-wrap" style="color:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>进行中
+          </div>
+          <div style="font-size:26px;font-weight:var(--fw-bold);color:var(--primary-700)" id="activeCountBig">0</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:2px">个选题已选择</div>
         </div>
         <!-- 已完成选题 -->
         <div class="card" style="flex:1;cursor:pointer;background:var(--green-100);border-color:var(--green-300)" onclick="switchTopicFilter('done',event);scrollToLibrary()">
@@ -596,6 +604,7 @@ button{cursor:pointer}
         </div>
         <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
           <div class="subtab active" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('all',event)">选题库</div>
+          <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('active',event)">进行中</div>
           <div class="subtab" style="font-size:12px;padding:var(--space-1) var(--space-3)" onclick="switchTopicFilter('done',event)">已完成</div>
           <div style="margin-left:auto;font-size:11px;color:var(--text-light);align-self:center" id="topicCount"></div>
         </div>
@@ -811,7 +820,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.4 · 实时同步默认开启
+        鹿系工作台 · v3.5 · 选题进行中卡片
       </div>
     </div>
 
@@ -1067,7 +1076,7 @@ var STATUS_LIST = [
 
 var ACCOUNTS = ['luxe','home','slow'];
 var currentAccount = 'luxe';
-var currentTopicFilter = 'all'; // all / done
+var currentTopicFilter = 'all'; // all / active / done
 var currentPage = 'plan';
 
 /* ==================== 页面切换 ==================== */
@@ -1320,15 +1329,19 @@ function scrollToLibrary(){
 function updateDoneCount(){
   var statuses = DB.get('topic_status', {});
   var totalDone = 0;
+  var totalActive = 0;
   ACCOUNTS.forEach(function(acc){
     var accTopics = TOPICS[acc].topics;
     accTopics.forEach(function(t, i){
       var st = statuses[acc+'_'+i] || 'idea';
       if(st === 'done' || st === 'review') totalDone++;
+      if(st === 'script' || st === 'shoot') totalActive++;
     });
   });
   var el = document.getElementById('doneCountBig');
   if(el) el.textContent = totalDone;
+  var ael = document.getElementById('activeCountBig');
+  if(ael) ael.textContent = totalActive;
 }
 
 /* ==================== 每日计划渲染 ==================== */
@@ -1433,6 +1446,10 @@ function renderTopics(){
   if(countEl){
     if(currentTopicFilter === 'done'){
       countEl.textContent = '已完成 '+doneCount+' 个';
+    } else if(currentTopicFilter === 'active'){
+      var activeCount = 0;
+      accTopics.forEach(function(t, i){ var st = statuses[currentAccount+'_'+i] || 'idea'; if(st === 'script' || st === 'shoot') activeCount++; });
+      countEl.textContent = '进行中 '+activeCount+' 个';
     } else {
       countEl.textContent = '共 '+accTopics.length+' 个';
     }
@@ -1449,6 +1466,8 @@ function renderTopics(){
       var st = statuses[stKey] || 'idea';
       if(currentTopicFilter === 'done'){
         if(st === 'done' || st === 'review') filteredTopics.push({t:t, i:i, st:st});
+      } else if(currentTopicFilter === 'active'){
+        if(st === 'script' || st === 'shoot') filteredTopics.push({t:t, i:i, st:st});
       } else {
         filteredTopics.push({t:t, i:i, st:st});
       }
@@ -1471,6 +1490,8 @@ function renderTopics(){
   if(!hasContent){
     if(currentTopicFilter === 'done'){
       html += '<div class="empty"><span class="empty-icon">🎉</span><div class="empty-text">还没有完成的选题</div><div class="empty-hint">把选题标记为「已发」后会出现在这里</div></div>';
+    } else if(currentTopicFilter === 'active'){
+      html += '<div class="empty"><span class="empty-icon">📝</span><div class="empty-text">还没有进行中的选题</div><div class="empty-hint">在选题库或今日推荐里，点击选题切到「脚本」就会出现在这里</div></div>';
     } else {
       html += '<div class="empty"><span class="empty-icon">📚</span><div class="empty-text">选题库是空的</div></div>';
     }
@@ -3055,7 +3076,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.4';
+  var CURRENT_VERSION = '3.5';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
