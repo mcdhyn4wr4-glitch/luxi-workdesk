@@ -830,7 +830,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v4.0 · 换一批修复+推荐随机化
+        鹿系工作台 · v4.1 · 推荐从全部选题随机抽
       </div>
     </div>
 
@@ -2447,13 +2447,12 @@ function generateDaily(forceRefresh){
     var unused = scored.filter(function(c){ return c.status === 'idea'; });
     var pool = unused.length >= 5 ? unused : (unused.length >= 3 ? unused : scored);
 
-    // 从高分池里随机选5个（取前10个再随机，保证质量又有变化）
-    var topPool = pool.slice(0, Math.min(pool.length, 10));
-    for(var i = topPool.length - 1; i > 0; i--){
+    // 从全部可选池里随机选5个（不限制前10，范围最大化）
+    for(var i = pool.length - 1; i > 0; i--){
       var j = Math.floor(Math.random() * (i + 1));
-      var tmp = topPool[i]; topPool[i] = topPool[j]; topPool[j] = tmp;
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
     }
-    var candidates = topPool.slice(0, 5);
+    var candidates = pool.slice(0, 5);
     result.candidates[acc] = candidates;
 
     // 默认不选定（推荐只是参考，用户自己选）
@@ -3285,7 +3284,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.0';
+  var CURRENT_VERSION = '4.1';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
