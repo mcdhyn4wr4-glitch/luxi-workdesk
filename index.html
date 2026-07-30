@@ -830,7 +830,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v4.1 · 推荐从全部选题随机抽
+        鹿系工作台 · v4.2 · 选题每日更新
       </div>
     </div>
 
@@ -1073,53 +1073,93 @@ var WEEKLY_EXTRA = {
     { t:'收到客户返图：她把我的字挂在了办公室', tag:'daily', dy:'客户反馈展示', xhs:'返图+故事' },
     { t:'一支毛笔能用多久？怎么洗笔保养', tag:'skill', dy:'保养全过程', xhs:'保养图文' },
     { t:'今日练习：抄一段喜欢的词', tag:'daily', dy:'书写过程', xhs:'成品+原文' },
-    { t:'把废纸变成书签的过程', tag:'daily', dy:'手工改造过程', xhs:'before/after' }
+    { t:'把废纸变成书签的过程', tag:'daily', dy:'手工改造过程', xhs:'before/after' },
+    { t:'粉丝要我写XX字，写完发出来', tag:'interact', dy:'评论截图+书写', xhs:'成品+评论' },
+    { t:'今天用了XX墨，颜色绝了', tag:'daily', dy:'书写+墨色特写', xhs:'墨色对比图' },
+    { t:'快递到了：新买的文房四宝开箱', tag:'daily', dy:'开箱过程', xhs:'开箱图文' },
+    { t:'一幅字从构思到完成的全过程', tag:'daily', dy:'加速拍摄全过程', xhs:'步骤图文' },
+    { t:'我的一天：写字、打包、发货', tag:'daily', dy:'vlog形式', xhs:'日常图文' },
+    { t:'手写春联/对联：过年专属', tag:'product', dy:'写春联过程', xhs:'春联成品图' },
+    { t:'客户婚礼请柬手写定制', tag:'product', dy:'定制过程', xhs:'请柬成品+故事' },
+    { t:'最近练字的心得：3个小技巧', tag:'skill', dy:'口述+演示', xhs:'技巧图文' },
+    { t:'不同价位的毛笔到底差在哪', tag:'skill', dy:'对比演示', xhs:'对比图文' },
+    { t:'我的文创产品在哪家工厂做的', tag:'daily', dy:'揭秘供应链', xhs:'工厂实拍图文' }
   ],
   home: [
     { t:'本周装修进度汇总', tag:'daily', dy:'工地实拍+口述', xhs:'进度图文' },
     { t:'装修中最容易超支的3个地方', tag:'skill', dy:'逐项讲解', xhs:'避坑清单' },
     { t:'和设计师（老公）吵架了：设计分歧怎么解决', tag:'view', dy:'口述+场景', xhs:'观点图文' },
     { t:'选了哪些品牌材料？清单+价格', tag:'skill', dy:'逐项展示', xhs:'品牌清单图' },
-    { t:'装修日记：本周最开心和最崩溃的瞬间', tag:'daily', dy:'vlog', xhs:'心情图文' }
+    { t:'装修日记：本周最开心和最崩溃的瞬间', tag:'daily', dy:'vlog', xhs:'心情图文' },
+    { t:'今天工地上发生的意外', tag:'daily', dy:'现场实拍', xhs:'事件记录图文' },
+    { t:'监理来验收了，现场跟拍', tag:'daily', dy:'验收过程', xhs:'验收清单图文' },
+    { t:'邻居家也在装修，我们去参观了', tag:'daily', dy:'参观vlog', xhs:'对比图文' },
+    { t:'这个材料我最终选了XX，原因是...', tag:'skill', dy:'选购决策过程', xhs:'对比+结论' },
+    { t:'装修中最后悔的一个决定', tag:'view', dy:'口述', xhs:'避坑图文' },
+    { t:'今天花了XX元，装修账单更新', tag:'daily', dy:'账单展示', xhs:'花费明细' },
+    { t:'工人师傅推荐的XX真的好用', tag:'skill', dy:'好物展示', xhs:'推荐清单' },
+    { t:'装修进度比预期慢了，怎么办', tag:'view', dy:'口述+现场', xhs:'进度分析图文' },
+    { t:'自己动手刷了一面墙', tag:'daily', dy:'DIY全过程', xhs:'before/after' },
+    { t:'装修期间怎么收纳保持生活正常', tag:'skill', dy:'收纳方案展示', xhs:'收纳图文' }
   ],
   slow: [
     { t:'创业第X天：今天的状态', tag:'daily', dy:'口述vlog', xhs:'状态图文' },
     { t:'带娃日常：今天孩子说的一句话让我愣住了', tag:'daily', dy:'场景重拍', xhs:'亲子图文' },
     { t:'最近在读的书：一段话分享+我的感受', tag:'view', dy:'书本+口述', xhs:'书摘+感悟' },
     { t:'一个人独处的下午，我做了什么', tag:'daily', dy:'环境vlog', xhs:'独处图文' },
-    { t:'本周复盘：做了什么/学到了什么/下周计划', tag:'daily', dy:'口述复盘', xhs:'复盘图文' }
+    { t:'本周复盘：做了什么/学到了什么/下周计划', tag:'daily', dy:'口述复盘', xhs:'复盘图文' },
+    { t:'今天收入XX元，创业真实账本', tag:'daily', dy:'账本展示', xhs:'收入图文' },
+    { t:'孩子睡了之后，我的黄金两小时', tag:'daily', dy:'夜间vlog', xhs:'独处图文' },
+    { t:'最近的一个灵感闪现', tag:'daily', dy:'口述+场景', xhs:'灵感记录' },
+    { t:'和闺蜜聊天后的感悟', tag:'view', dy:'口述', xhs:'感悟图文' },
+    { t:'今天效率特别低，我是怎么调整的', tag:'daily', dy:'口述+日常', xhs:'调整方法图文' },
+    { t:'最近关注的同行，学到了什么', tag:'view', dy:'分析+口述', xhs:'学习笔记' },
+    { t:'给孩子做了一件事，他开心了很久', tag:'daily', dy:'场景记录', xhs:'亲子图文' },
+    { t:'今天的TODO完成了多少', tag:'daily', dy:'清单展示', xhs:'完成清单图' },
+    { t:'创业中最大的焦虑是什么', tag:'view', dy:'真诚口述', xhs:'心路图文' },
+    { t:'今天发现的一个好用的工具/app', tag:'skill', dy:'展示使用过程', xhs:'推荐图文' }
   ]
 };
 
-/* 每周自动补充选题 */
+/* 每天自动补充选题（每天每账号加2个新选题） */
 function checkWeeklyTopics(){
-  var weekKey = getWeekKey();
-  var last = DB.get('last_week_topics', '');
-  if(last === weekKey) return; // 本周已补充
+  var dayKey = todayKey();
+  var last = DB.get('last_day_topics', '');
+  if(last === dayKey) return; // 今天已补充
   ACCOUNTS.forEach(function(acc){
     var pool = WEEKLY_EXTRA[acc] || [];
     if(pool.length === 0) return;
+    // 获取已用过的选题
+    var usedTitles = DB.get('used_extra_topics_'+acc, []);
+    // 过滤掉已用过的
+    var available = pool.filter(function(t){ return usedTitles.indexOf(t.t) === -1; });
+    // 如果全用完了，重置
+    if(available.length === 0){
+      usedTitles = [];
+      available = pool.slice();
+    }
     // 随机选2个加入选题库
-    var picked = pool.sort(function(){ return Math.random() - 0.5; }).slice(0, 2);
+    var picked = available.sort(function(){ return Math.random() - 0.5; }).slice(0, 2);
     picked.forEach(function(topic){
+      var dirs = TOPICS[acc].directions;
+      // 加入对应方向（按tag匹配），找不到就放第一个方向
+      var targetDir = 0;
+      for(var di = 0; di < dirs.length; di++){
+        if(dirs[di].name.indexOf(topic.tag) !== -1 || di === 0){ targetDir = di; break; }
+      }
       // 检查是否已存在
-      var existing = TOPICS[acc].directions;
       var exists = false;
-      existing.forEach(function(dir){
-        dir.topics.forEach(function(t){
-          if(t.t === topic.t) exists = true;
-        });
+      dirs.forEach(function(dir){
+        dir.topics.forEach(function(t){ if(t.t === topic.t) exists = true; });
       });
       if(!exists){
-        // 找第一个方向加入
-        if(existing.length > 0){
-          existing[0].topics.push({ d:1, t:topic.t, tag:topic.tag, dy:topic.dy, xhs:topic.xhs });
-        }
+        dirs[targetDir].topics.push({ d:targetDir, t:topic.t, tag:topic.tag, dy:topic.dy, xhs:topic.xhs });
+        usedTitles.push(topic.t);
       }
     });
+    DB.set('used_extra_topics_'+acc, usedTitles);
   });
-  DB.set('last_week_topics', weekKey);
-  // 保存到本地
+  DB.set('last_day_topics', dayKey);
   DB.set('topics_data', TOPICS);
 }
 
@@ -3284,7 +3324,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.1';
+  var CURRENT_VERSION = '4.2';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
