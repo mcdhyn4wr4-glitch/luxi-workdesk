@@ -830,7 +830,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v4.2 · 选题每日更新
+        鹿系工作台 · v4.3 · 每天20个选题+智能推荐
       </div>
     </div>
 
@@ -2435,10 +2435,57 @@ function getDaySeed(){
   return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
 }
 
-// 给候选选题打分排序
+// 根据账号历史数据分析选题偏好
+function analyzeAccountProfile(acc){
+  var statuses = DB.get('topic_status', {});
+  var blacklist = DB.get('topic_blacklist', {});
+  var accTopics = TOPICS[acc].topics;
+  var profile = {
+    likedTags: {},      // 用户选过/做过的 tag 分布
+    dislikedTags: {},   // 用户拒绝过的 tag 分布
+    likedDirs: {},      // 用户选过/做过的方向分布
+    totalDone: 0,       // 完成总数
+    totalActive: 0,     // 进行中总数
+    totalRejected: 0    // 拒绝总数
+  };
+
+  accTopics.forEach(function(t, i){
+    var key = acc+'_'+i;
+    var st = statuses[key] || 'idea';
+    if(st === 'script' || st === 'shoot' || st === 'done' || st === 'review'){
+      profile.likedTags[t.tag] = (profile.likedTags[t.tag] || 0) + 1;
+      profile.likedDirs[t.d] = (profile.likedDirs[t.d] || 0) + 1;
+      if(st === 'done' || st === 'review') profile.totalDone++;
+      else profile.totalActive++;
+    }
+    if(blacklist[key]){
+      profile.dislikedTags[t.tag] = (profile.dislikedTags[t.tag] || 0) + 1;
+      profile.totalRejected++;
+    }
+  });
+
+  // 计算每个 tag 的偏好分数
+  var totalLiked = 0;
+  for(var tag in profile.likedTags) totalLiked += profile.likedTags[tag];
+  profile.tagScores = {};
+  ['product','daily','skill','view','interact'].forEach(function(tag){
+    var liked = profile.likedTags[tag] || 0;
+    var disliked = profile.dislikedTags[tag] || 0;
+    if(totalLiked > 0){
+      profile.tagScores[tag] = (liked / totalLiked) - (disliked * 0.1);
+    } else {
+      profile.tagScores[tag] = 0;
+    }
+  });
+
+  return profile;
+}
+
+// 给候选选题打分排序（基于账号历史数据）
 function scoreTopics(acc, allTopics){
   var statuses = DB.get('topic_status', {});
   var season = getSeason();
+  var profile = analyzeAccountProfile(acc);
   var candidates = [];
   var stageTopics = (acc === 'home') ? (HOME_STAGE_TOPICS[HOME_STAGE] || HOME_STAGE_TOPICS.shuidian) : null;
 
@@ -2449,16 +2496,29 @@ function scoreTopics(acc, allTopics){
     var st = statuses[acc+'_'+i] || 'idea';
     var score = 0;
 
-    // 未做的选题优先级最高
+    // 1. 基础分：未做的优先
     if(st === 'idea') score += 10;
-    else if(st === 'script' || st === 'shoot') score += 5; // 进行中次高
-    else score += 1; // 已发的作为备选
+    else if(st === 'script' || st === 'shoot') score += 5;
+    else score += 1;
 
-    // 季节性加分
+    // 2. 根据用户历史偏好加分（核心：推荐用户喜欢的类型）
+    var tagScore = profile.tagScores[t.tag] || 0;
+    score += tagScore * 8;  // 偏好权重高
+
+    // 3. 方向偏好：用户常选的方向加分
+    var dirScore = profile.likedDirs[t.d] || 0;
+    if(dirScore > 0) score += dirScore * 2;
+
+    // 4. 季节性加分
     var boost = (SEASONAL_BOOST[season][acc] || []).indexOf(t.t) !== -1 ? 3 : 0;
     score += boost;
 
-    // 多样化：不同方向的内容穿插
+    // 5. 账号定位加分
+    if(acc === 'luxe' && t.tag === 'product') score += 2;      // 鹿溪风偏变现
+    if(acc === 'home' && t.tag === 'daily') score += 2;        // 鹿住新家偏进度记录
+    if(acc === 'slow' && (t.tag === 'view' || t.tag === 'daily')) score += 2; // 鹿慢慢偏个人IP
+
+    // 6. 多样化：不同方向的内容穿插
     score += (t.tag === 'product' || t.tag === 'daily') ? 0.5 : 0;
 
     candidates.push({ idx:i, topic:t, score:score, status:st });
@@ -2468,13 +2528,34 @@ function scoreTopics(acc, allTopics){
   return candidates;
 }
 
-// 生成每日推荐
+// 生成每日推荐（每天重新生成，昨天没选的自动清掉）
 function generateDaily(forceRefresh){
   var dayKey = todayKey();
   var saved = DB.get('daily_rec', null);
+
+  // 昨天没选的选题，自动加入"已看过"名单（不是黑名单，只是不再优先推）
+  if(saved && saved.day !== dayKey){
+    // 新的一天：把昨天没选的候选标记为"已看过"
+    var seen = DB.get('seen_topics', {});
+    if(saved.candidates){
+      ACCOUNTS.forEach(function(acc){
+        var candidates = saved.candidates[acc] || [];
+        var selected = saved.selected[acc];
+        candidates.forEach(function(c){
+          if(c.idx !== selected){
+            // 没选的标记为已看过，降低后续推荐优先级
+            seen[acc+'_'+c.idx] = (seen[acc+'_'+c.idx] || 0) + 1;
+          }
+        });
+      });
+      DB.set('seen_topics', seen);
+    }
+  }
+
   if(saved && saved.day === dayKey && !forceRefresh) return saved;
 
-  var blacklist = DB.get('topic_blacklist', {}); // { 'luxe_3': true, 'home_5': true }
+  var blacklist = DB.get('topic_blacklist', {});
+  var seen = DB.get('seen_topics', {});
   var result = { day: dayKey, candidates: {}, selected: {} };
 
   ACCOUNTS.forEach(function(acc){
@@ -2483,19 +2564,28 @@ function generateDaily(forceRefresh){
     scored = scored.filter(function(c){ return !blacklist[acc+'_'+c.idx]; });
     // 已完成/已复盘的选题永久不再推荐
     scored = scored.filter(function(c){ return c.status !== 'done' && c.status !== 'review'; });
-    // 优先推荐未开始的（idea），不够再补进行中的（script/shoot）
-    var unused = scored.filter(function(c){ return c.status === 'idea'; });
-    var pool = unused.length >= 5 ? unused : (unused.length >= 3 ? unused : scored);
 
-    // 从全部可选池里随机选5个（不限制前10，范围最大化）
-    for(var i = pool.length - 1; i > 0; i--){
+    // 优先推没看过的（idea + 没在 seen 里），其次看过的降权
+    var fresh = scored.filter(function(c){ return !seen[acc+'_'+c.idx]; });
+    var seenPool = scored.filter(function(c){ return seen[acc+'_'+c.idx]; });
+
+    // fresh 池随机打乱
+    for(var i = fresh.length - 1; i > 0; i--){
       var j = Math.floor(Math.random() * (i + 1));
-      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+      var tmp = fresh[i]; fresh[i] = fresh[j]; fresh[j] = tmp;
     }
-    var candidates = pool.slice(0, 5);
+    // seen 池也随机打乱（作为补充）
+    for(var i = seenPool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = seenPool[i]; seenPool[i] = seenPool[j]; seenPool[j] = tmp;
+    }
+
+    // 合并：优先 fresh，不够补 seen，总共 20 个
+    var pool = fresh.concat(seenPool);
+    var candidates = pool.slice(0, 20);
     result.candidates[acc] = candidates;
 
-    // 默认不选定（推荐只是参考，用户自己选）
+    // 默认不选定
     result.selected[acc] = -1;
   });
 
@@ -2573,12 +2663,13 @@ function rejectTopic(acc, idx, evt){
   scheduleRealtimeSync();
 }
 
-// 换一批候选（随机重新选5个，排除当前候选+已完成+黑名单）
+// 换一批候选（随机重新选20个，排除当前已选定的+已完成+黑名单+已看过优先）
 function refreshDailyCandidates(acc){
   var rec = generateDaily(false);
   var blacklist = DB.get('topic_blacklist', {});
+  var seen = DB.get('seen_topics', {});
   var scored = scoreTopics(acc, TOPICS[acc].topics);
-  // 过滤黑名单 + 已完成/已复盘（和 generateDaily 保持一致）
+  // 过滤黑名单 + 已完成/已复盘
   scored = scored.filter(function(c){
     if(blacklist[acc+'_'+c.idx]) return false;
     if(c.status === 'done' || c.status === 'review') return false;
@@ -2587,15 +2678,23 @@ function refreshDailyCandidates(acc){
   var currentSelected = rec.selected[acc];
   var currentCandidates = (rec.candidates[acc] || []).map(function(c){ return c.idx; });
 
-  // 从候选池排除当前的（保留选定的），随机打乱后选5个
-  var newPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) === -1; });
+  // 优先没看过的
+  var fresh = scored.filter(function(c){ return !seen[acc+'_'+c.idx] && currentCandidates.indexOf(c.idx) === -1; });
+  var seenPool = scored.filter(function(c){ return seen[acc+'_'+c.idx] && currentCandidates.indexOf(c.idx) === -1; });
+
   // 随机打乱
-  for(var i = newPool.length - 1; i > 0; i--){
+  for(var i = fresh.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
-    var tmp = newPool[i]; newPool[i] = newPool[j]; newPool[j] = tmp;
+    var tmp = fresh[i]; fresh[i] = fresh[j]; fresh[j] = tmp;
   }
-  // 不够5个，从旧候选里补（排除选定的）
-  if(newPool.length < 5){
+  for(var i = seenPool.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = seenPool[i]; seenPool[i] = seenPool[j]; seenPool[j] = tmp;
+  }
+
+  var newPool = fresh.concat(seenPool);
+  // 不够20个，从旧候选里补（排除选定的）
+  if(newPool.length < 20){
     var oldPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) !== -1 && c.idx !== currentSelected; });
     for(var i = oldPool.length - 1; i > 0; i--){
       var j = Math.floor(Math.random() * (i + 1));
@@ -2603,7 +2702,7 @@ function refreshDailyCandidates(acc){
     }
     newPool = newPool.concat(oldPool);
   }
-  var newCandidates = newPool.slice(0, 5);
+  var newCandidates = newPool.slice(0, 20);
   rec.candidates[acc] = newCandidates;
 
   // 如果当前选定的不在新候选里，清除选定
@@ -3324,7 +3423,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.2';
+  var CURRENT_VERSION = '4.3';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
