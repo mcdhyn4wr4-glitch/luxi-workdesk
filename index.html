@@ -830,7 +830,7 @@ button{cursor:pointer}
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--text-muted);padding:var(--space-2) 0 var(--space-1)">
-        鹿系工作台 · v3.9 · 修复进行中筛选
+        鹿系工作台 · v4.0 · 换一批修复+推荐随机化
       </div>
     </div>
 
@@ -2447,8 +2447,13 @@ function generateDaily(forceRefresh){
     var unused = scored.filter(function(c){ return c.status === 'idea'; });
     var pool = unused.length >= 5 ? unused : (unused.length >= 3 ? unused : scored);
 
-    // 取前5个候选
-    var candidates = pool.slice(0, 5);
+    // 从高分池里随机选5个（取前10个再随机，保证质量又有变化）
+    var topPool = pool.slice(0, Math.min(pool.length, 10));
+    for(var i = topPool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = topPool[i]; topPool[i] = topPool[j]; topPool[j] = tmp;
+    }
+    var candidates = topPool.slice(0, 5);
     result.candidates[acc] = candidates;
 
     // 默认不选定（推荐只是参考，用户自己选）
@@ -2529,20 +2534,34 @@ function rejectTopic(acc, idx, evt){
   scheduleRealtimeSync();
 }
 
-// 换一批候选（重新生成今天的候选，排除当前已选定的）
+// 换一批候选（随机重新选5个，排除当前候选+已完成+黑名单）
 function refreshDailyCandidates(acc){
   var rec = generateDaily(false);
   var blacklist = DB.get('topic_blacklist', {});
   var scored = scoreTopics(acc, TOPICS[acc].topics);
-  // 过滤黑名单
-  scored = scored.filter(function(c){ return !blacklist[acc+'_'+c.idx]; });
+  // 过滤黑名单 + 已完成/已复盘（和 generateDaily 保持一致）
+  scored = scored.filter(function(c){
+    if(blacklist[acc+'_'+c.idx]) return false;
+    if(c.status === 'done' || c.status === 'review') return false;
+    return true;
+  });
   var currentSelected = rec.selected[acc];
   var currentCandidates = (rec.candidates[acc] || []).map(function(c){ return c.idx; });
 
-  // 从候选池排除当前的，再选5个新的
+  // 从候选池排除当前的（保留选定的），随机打乱后选5个
   var newPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) === -1; });
+  // 随机打乱
+  for(var i = newPool.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = newPool[i]; newPool[i] = newPool[j]; newPool[j] = tmp;
+  }
+  // 不够5个，从旧候选里补（排除选定的）
   if(newPool.length < 5){
     var oldPool = scored.filter(function(c){ return currentCandidates.indexOf(c.idx) !== -1 && c.idx !== currentSelected; });
+    for(var i = oldPool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = oldPool[i]; oldPool[i] = oldPool[j]; oldPool[j] = tmp;
+    }
     newPool = newPool.concat(oldPool);
   }
   var newCandidates = newPool.slice(0, 5);
@@ -3266,7 +3285,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '3.9';
+  var CURRENT_VERSION = '4.0';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
