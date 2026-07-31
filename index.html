@@ -2490,9 +2490,6 @@ function scoreTopics(acc, allTopics){
   var stageTopics = (acc === 'home') ? (HOME_STAGE_TOPICS[HOME_STAGE] || HOME_STAGE_TOPICS.shuidian) : null;
 
   allTopics.forEach(function(t, i){
-    // 鹿住新家：只在当前装修阶段相关的选题里挑
-    if(acc === 'home' && stageTopics.indexOf(t.t) === -1) return;
-
     var st = statuses[acc+'_'+i] || 'idea';
     var score = 0;
 
@@ -2500,6 +2497,12 @@ function scoreTopics(acc, allTopics){
     if(st === 'idea') score += 10;
     else if(st === 'script' || st === 'shoot') score += 5;
     else score += 1;
+
+    // 鹿住新家：当前装修阶段的选题大幅加分（但不排除其他阶段）
+    if(acc === 'home' && stageTopics){
+      if(stageTopics.indexOf(t.t) !== -1) score += 8; // 当前阶段+8分
+      else score += 1; // 非当前阶段也有基础分，不被排除
+    }
 
     // 2. 根据用户历史偏好加分（核心：推荐用户喜欢的类型）
     var tagScore = profile.tagScores[t.tag] || 0;
@@ -3423,7 +3426,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.3';
+  var CURRENT_VERSION = '4.4';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
