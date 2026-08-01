@@ -1566,6 +1566,11 @@ function renderTopics(){
   // 按方向分组
   var hasContent = false;
   acc.directions.forEach(function(dir, di){
+    // 鹿住新家：还没到硬装完工阶段时，隐藏「入住生活」方向
+    if(currentAccount === 'home' && di === 4){
+      var stageIdx = STAGE_ORDER.indexOf(HOME_STAGE);
+      if(stageIdx < 4) return; // 还没到硬装完工，跳过入住生活方向
+    }
     // 先收集这个方向下符合筛选的选题
     var filteredTopics = [];
     accTopics.forEach(function(t, i){
@@ -2492,6 +2497,13 @@ function scoreTopics(acc, allTopics){
   allTopics.forEach(function(t, i){
     var st = statuses[acc+'_'+i] || 'idea';
     var score = 0;
+
+    // 鹿住新家：还没搬家时排除「入住生活」方向(d:4)的选题
+    if(acc === 'home'){
+      var stageIdx = STAGE_ORDER.indexOf(HOME_STAGE);
+      // 只有硬装完工(yingzhuang, idx=4)或软装阶段(ruanzhuang, idx=5)才推入住类选题
+      if(t.d === 4 && stageIdx < 4) return; // 还没到硬装完工，跳过入住生活选题
+    }
 
     // 1. 基础分：未做的优先
     if(st === 'idea') score += 10;
@@ -3426,7 +3438,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.4';
+  var CURRENT_VERSION = '4.5';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
