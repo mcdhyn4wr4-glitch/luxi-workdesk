@@ -649,7 +649,20 @@ button{cursor:pointer}
     <!-- ===== 页面3: 生活记录 ===== -->
     <div class="page" id="page-life">
       <div class="card">
-        <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:6px" id="lifeDate"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-2)">
+          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:12px" onclick="shiftLifeDate(-1)">‹ 前一天</button>
+          <div style="display:flex;align-items:center;gap:var(--space-2)">
+            <span style="font-size:13px;color:var(--text-light)" id="lifeDate"></span>
+            <input type="date" id="lifeDatePicker" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text)" onchange="jumpLifeDate(this.value)">
+          </div>
+          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:12px" onclick="shiftLifeDate(1)">后一天 ›</button>
+        </div>
+        <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-2)">
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-1))">昨天</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-2))">前天</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-3))">大前天</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(todayKey())">回到今天</button>
+        </div>
         <div class="card-title" style="justify-content:center"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg></span>今日日记</div>
         <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:4px">今天的状态</div>
         <div class="mood-picker" style="justify-content:center" id="moodPicker">
@@ -1875,8 +1888,42 @@ function renderLifeAudios(key){
 /* ==================== 生活记录渲染 ==================== */
 var currentLifeDate = todayKey();
 
+/* 日期工具：获取偏移日期 */
+function getDateOffset(offset){
+  var d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+/* 跳转到指定日期 */
+function jumpLifeDate(dateStr){
+  currentLifeDate = dateStr;
+  renderLife();
+  document.getElementById('content').scrollTop = 0;
+  var today = todayKey();
+  toast(dateStr === today ? '回到今天' : '查看：'+dateStr + (dateStr > today ? '（未来）' : '（补写）'));
+}
+
+/* 前一天/后一天 */
+function shiftLifeDate(offset){
+  var d = new Date(currentLifeDate);
+  d.setDate(d.getDate() + offset);
+  var dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  jumpLifeDate(dateStr);
+}
+
 function renderLife(){
-  document.getElementById('lifeDate').textContent = formatDate() + ' · ' + currentLifeDate;
+  var today = todayKey();
+  var isToday = currentLifeDate === today;
+  var dateLabel = currentLifeDate;
+  if(isToday) dateLabel = '今天 · ' + formatDate();
+  else if(currentLifeDate === getDateOffset(-1)) dateLabel = '昨天 · ' + currentLifeDate;
+  else if(currentLifeDate === getDateOffset(-2)) dateLabel = '前天 · ' + currentLifeDate;
+  else dateLabel = currentLifeDate + (currentLifeDate > today ? '（未来）' : '（补写）');
+  document.getElementById('lifeDate').textContent = dateLabel;
+  // 同步日期选择器
+  var picker = document.getElementById('lifeDatePicker');
+  if(picker) picker.value = currentLifeDate;
   var entry = DB.get('life_'+currentLifeDate, { mood:'', event:'', feel:'', gratitude:'' });
 
   // 心情
@@ -3438,7 +3485,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.5';
+  var CURRENT_VERSION = '4.6';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
