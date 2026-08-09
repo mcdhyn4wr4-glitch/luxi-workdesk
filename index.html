@@ -648,24 +648,28 @@ button{cursor:pointer}
 
     <!-- ===== 页面3: 生活记录 ===== -->
     <div class="page" id="page-life">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-2)">
-          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:12px" onclick="shiftLifeDate(-1)">‹ 前一天</button>
-          <div style="display:flex;align-items:center;gap:var(--space-2)">
-            <span style="font-size:13px;color:var(--text-light)" id="lifeDate"></span>
-            <input type="date" id="lifeDatePicker" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text)" onchange="jumpLifeDate(this.value)">
+      <!-- 日期选择条 -->
+      <div class="card" style="padding:var(--space-3)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <button class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:16px;border:none;background:transparent" onclick="shiftLifeDate(-1)">‹</button>
+          <div style="text-align:center;flex:1;cursor:pointer" onclick="document.getElementById('lifeDatePicker').showPicker ? document.getElementById('lifeDatePicker').showPicker() : document.getElementById('lifeDatePicker').click()">
+            <div style="font-size:16px;font-weight:var(--fw-semibold);color:var(--text)" id="lifeDateMain">今天</div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:1px" id="lifeDateSub">点击切换日期</div>
+            <input type="date" id="lifeDatePicker" style="position:absolute;opacity:0;width:0;height:0" onchange="jumpLifeDate(this.value)">
           </div>
-          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:12px" onclick="shiftLifeDate(1)">后一天 ›</button>
+          <button class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:16px;border:none;background:transparent" onclick="shiftLifeDate(1)">›</button>
         </div>
-        <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-2)">
-          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-1))">昨天</button>
-          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-2))">前天</button>
-          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(getDateOffset(-3))">大前天</button>
-          <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;padding:3px" onclick="jumpLifeDate(todayKey())">回到今天</button>
+        <div style="display:flex;gap:6px;margin-top:var(--space-2)">
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px" onclick="jumpLifeDate(getDateOffset(-1))">昨天</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px" onclick="jumpLifeDate(getDateOffset(-2))">前天</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:4px" onclick="jumpLifeDate(getDateOffset(-3))">大前天</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;padding:4px" onclick="jumpLifeDate(todayKey())">今天</button>
         </div>
-        <div class="card-title" style="justify-content:center"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg></span>今日日记</div>
-        <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:4px">今天的状态</div>
-        <div class="mood-picker" style="justify-content:center" id="moodPicker">
+      </div>
+
+      <!-- 日记卡片 -->
+      <div class="card">
+        <div class="mood-picker" style="justify-content:center;margin-bottom:var(--space-3)" id="moodPicker">
           <span class="mood" data-mood="😊">😊</span>
           <span class="mood" data-mood="😐">😐</span>
           <span class="mood" data-mood="😮‍💨">😮‍💨</span>
@@ -673,16 +677,14 @@ button{cursor:pointer}
           <span class="mood" data-mood="🥰">🥰</span>
           <span class="mood" data-mood="😴">😴</span>
         </div>
-        <div class="section-label" style="margin-top:14px">今天发生了什么</div>
-        <textarea class="textarea" id="lifeEvent" placeholder="值得记住的事...也可点语音说" style="min-height:60px"></textarea>
-        <div class="section-label">今天的感受</div>
-        <textarea class="textarea" id="lifeFeel" placeholder="写写感受...也可点语音说" style="min-height:60px"></textarea>
-        <div class="section-label">感恩的三件小事</div>
-        <textarea class="textarea" id="lifeGratitude" placeholder="1.&#10;2.&#10;3." style="min-height:70px"></textarea>
+        <textarea class="textarea" id="lifeEvent" placeholder="今天发生了什么..." style="min-height:70px;margin-bottom:var(--space-2)"></textarea>
+        <textarea class="textarea" id="lifeFeel" placeholder="今天的感受..." style="min-height:50px;margin-bottom:var(--space-2)"></textarea>
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:4px">感恩的三件小事</div>
+        <textarea class="textarea" id="lifeGratitude" placeholder="1.&#10;2.&#10;3." style="min-height:60px"></textarea>
         <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
-          <button class="btn btn-outline" style="flex:1" onclick="saveLife()">保存今日记录</button>
-          <button id="lifeVoiceBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeVoice()">语音转文字</button>
-          <button id="lifeRecordBtn" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" onclick="toggleLifeRecord()">录语音</button>
+          <button class="btn btn-primary" style="flex:1" onclick="saveLife()">保存</button>
+          <button id="lifeVoiceBtn" class="btn btn-outline btn-sm" style="padding:6px 10px" onclick="toggleLifeVoice()">🎤 语音</button>
+          <button id="lifeRecordBtn" class="btn btn-outline btn-sm" style="padding:6px 10px" onclick="toggleLifeRecord()">🎙️ 录音</button>
         </div>
         <div id="lifeVoiceStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止</div>
         <div id="lifeRecordStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止保存</div>
@@ -1915,12 +1917,15 @@ function shiftLifeDate(offset){
 function renderLife(){
   var today = todayKey();
   var isToday = currentLifeDate === today;
-  var dateLabel = currentLifeDate;
-  if(isToday) dateLabel = '今天 · ' + formatDate();
-  else if(currentLifeDate === getDateOffset(-1)) dateLabel = '昨天 · ' + currentLifeDate;
-  else if(currentLifeDate === getDateOffset(-2)) dateLabel = '前天 · ' + currentLifeDate;
-  else dateLabel = currentLifeDate + (currentLifeDate > today ? '（未来）' : '（补写）');
-  document.getElementById('lifeDate').textContent = dateLabel;
+  var mainLabel = '', subLabel = '';
+  if(isToday){ mainLabel = '今天'; subLabel = formatDate(); }
+  else if(currentLifeDate === getDateOffset(-1)){ mainLabel = '昨天'; subLabel = currentLifeDate; }
+  else if(currentLifeDate === getDateOffset(-2)){ mainLabel = '前天'; subLabel = currentLifeDate; }
+  else { mainLabel = currentLifeDate; subLabel = isToday ? '' : (currentLifeDate > today ? '未来日期' : '点击切换日期'); }
+  var mainEl = document.getElementById('lifeDateMain');
+  var subEl = document.getElementById('lifeDateSub');
+  if(mainEl) mainEl.textContent = mainLabel;
+  if(subEl) subEl.textContent = subLabel;
   // 同步日期选择器
   var picker = document.getElementById('lifeDatePicker');
   if(picker) picker.value = currentLifeDate;
@@ -3485,7 +3490,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.6';
+  var CURRENT_VERSION = '4.7';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
