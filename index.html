@@ -690,6 +690,20 @@ button{cursor:pointer}
         <div id="lifeRecordStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:var(--space-2);text-align:center">🔴 录音中... 点击停止保存</div>
         <div id="lifeAudioList" style="margin-top:var(--space-2)"></div>
       </div>
+      <!-- 日历视图：点击日期跳转，有记录的标绿 -->
+      <div class="card" id="lifeCalendarCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3)">
+          <button class="btn btn-outline btn-sm" style="padding:4px 10px;border:none;background:transparent;font-size:16px" onclick="shiftLifeCalendar(-1)">‹</button>
+          <span style="font-size:15px;font-weight:var(--fw-semibold)" id="lifeCalTitle"></span>
+          <button class="btn btn-outline btn-sm" style="padding:4px 10px;border:none;background:transparent;font-size:16px" onclick="shiftLifeCalendar(1)">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center" id="lifeCalendarGrid"></div>
+        <div style="display:flex;gap:var(--space-3);justify-content:center;margin-top:var(--space-2);font-size:10px;color:var(--text-light)">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:3px;vertical-align:middle"></span>已记录</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--primary);margin-right:3px;vertical-align:middle"></span>今天</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-100);margin-right:3px;vertical-align:middle;border:1px solid var(--accent-300)"></span>遗漏</span>
+        </div>
+      </div>
       <div class="section-label">往期记录</div>
       <div id="lifeHistory"></div>
     </div>
@@ -1963,12 +1977,79 @@ function renderLife(){
     });
   }
   document.getElementById('lifeHistory').innerHTML = html;
+  // 渲染日历
+  renderLifeCalendar();
 }
 
 function viewLife(date){
   currentLifeDate = date;
   renderLife();
   document.getElementById('content').scrollTop = 0;
+}
+
+/* ===== 生活记录日历 ===== */
+var lifeCalDate = new Date(); // 当前显示的月份
+
+function shiftLifeCalendar(offset){
+  lifeCalDate.setMonth(lifeCalDate.getMonth() + offset);
+  renderLifeCalendar();
+}
+
+function renderLifeCalendar(){
+  var year = lifeCalDate.getFullYear();
+  var month = lifeCalDate.getMonth();
+  var today = todayKey();
+  var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var weekDays = ['日','一','二','三','四','五','六'];
+
+  var titleEl = document.getElementById('lifeCalTitle');
+  if(titleEl) titleEl.textContent = year + '年 ' + monthNames[month];
+
+  // 获取当月所有有记录的日期
+  var recordedDates = {};
+  for(var i = 0; i < localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(k && k.indexOf('lu_life_') === 0){
+      var date = k.replace('lu_life_','');
+      var parts = date.split('-');
+      if(parseInt(parts[0]) === year && parseInt(parts[1]) === month + 1){
+        recordedDates[parseInt(parts[2])] = true;
+      }
+    }
+  }
+
+  var firstDay = new Date(year, month, 1).getDay(); // 当月1号是周几
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  var html = '';
+  // 星期标题
+  weekDays.forEach(function(d){
+    html += '<div style="font-size:10px;color:var(--text-muted);padding:4px 0;font-weight:var(--fw-medium)">'+d+'</div>';
+  });
+  // 空白填充
+  for(var i = 0; i < firstDay; i++){
+    html += '<div></div>';
+  }
+  // 日期格子
+  for(var day = 1; day <= daysInMonth; day++){
+    var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    var isToday = dateStr === today;
+    var isRecorded = recordedDates[day];
+    var isPast = dateStr < today;
+    var isFuture = dateStr > today;
+
+    var bg = '', dot = '', color = 'var(--text)';
+    if(isToday){ bg = 'background:var(--primary-bg);border:1px solid var(--primary-300);'; color = 'var(--primary-700)'; }
+    if(isRecorded){ dot = '<div style="width:5px;height:5px;border-radius:50%;background:var(--green);margin:2px auto 0"></div>'; }
+    else if(isPast){ dot = '<div style="width:5px;height:5px;border-radius:50%;background:var(--accent-100);border:1px solid var(--accent-300);margin:2px auto 0"></div>'; }
+    else { dot = '<div style="width:5px;height:5px;margin:2px auto 0"></div>'; }
+
+    html += '<div onclick="jumpLifeDate(\''+dateStr+'\')" style="padding:5px 0;cursor:pointer;border-radius:var(--radius-sm);text-align:center;font-size:12px;'+bg+'">'+
+      '<div style="color:'+color+'">'+day+'</div>'+dot+'</div>';
+  }
+
+  var grid = document.getElementById('lifeCalendarGrid');
+  if(grid) grid.innerHTML = html;
 }
 
 document.addEventListener('click', function(e){
@@ -3490,7 +3571,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.7';
+  var CURRENT_VERSION = '4.8';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
