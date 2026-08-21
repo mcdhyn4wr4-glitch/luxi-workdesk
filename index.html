@@ -493,83 +493,114 @@ button{cursor:pointer}
 
     <!-- ===== 页面0: 每日计划 ===== -->
     <div class="page active" id="page-plan">
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:13px;color:var(--text-light)" id="planDateLong"></div>
+
+      <!-- 一句话打卡（首屏主角） -->
+      <div class="card card-primary" id="dailyCheckinCard">
+        <div style="text-align:center;margin-bottom:var(--space-2)">
+          <div style="font-size:15px;font-weight:var(--fw-semibold)" id="planDateLong"></div>
+        </div>
+        <div style="font-size:13px;color:var(--text-light);margin-bottom:var(--space-2)">今天做了什么？</div>
+        <textarea class="textarea" id="dailyNote" placeholder="一句话记录今天..." style="min-height:80px;font-size:14px"></textarea>
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
+          <button class="btn btn-primary" style="flex:1" onclick="saveCheckin()">✓ 打卡</button>
+          <button id="checkinVoiceBtn" class="btn btn-outline btn-sm" style="padding:6px 12px" onclick="toggleCheckinVoice()">🎤</button>
+        </div>
+        <div id="checkinFeedback" style="display:flex;gap:var(--space-3);justify-content:center;margin-top:var(--space-3);font-size:12px">
+          <span style="color:var(--accent-700)">🔥 连续 <b id="streakCount">0</b> 天</span>
+          <span style="color:var(--text-light)">本周 <b id="weekCount">0</b>/7 天</span>
+          <span style="color:var(--text-light)">本月 <b id="monthCount">0</b> 天</span>
+        </div>
       </div>
 
-      <!-- 今日工作流：晨间整理 + 晚间复盘 -->
-      <div class="card card-primary" id="workflowCard">
-        <div class="card-title">
-          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>今日工作流
-          <span id="workflowPhase" style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary);font-weight:var(--fw-medium)">晨间</span>
-        </div>
-        <div id="workflowMorning">
-          <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--primary);margin-bottom:var(--space-2)">🌅 晨间 15min · 快速整理今天</div>
-          <div id="morningChecklist"></div>
-          <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics',window.event)">看今日选题</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="scrollToCard('top3Card')">填三件事</button>
+      <!-- 展开更多（默认收起） -->
+      <div id="planMoreSection" style="display:none">
+        <!-- 今日工作流 -->
+        <div class="card card-collapsible" id="workflowCard">
+          <div class="card-title" onclick="toggleCollapse(this)">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>今日工作流
+            <span id="workflowPhase" style="margin-left:auto;font-size:11px;padding:3px 9px;border-radius:var(--radius-sm);background:var(--primary-bg);color:var(--primary);font-weight:var(--fw-medium)">晨间</span>
+            <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="card-body">
+            <div id="workflowMorning">
+              <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--primary);margin-bottom:var(--space-2)">🌅 晨间 15min · 快速整理今天</div>
+              <div id="morningChecklist"></div>
+              <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+                <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('topics',window.event)">看今日选题</button>
+                <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="scrollToCard('top3Card')">填三件事</button>
+              </div>
+            </div>
+            <div id="workflowEvening" style="display:none">
+              <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--accent);margin-bottom:var(--space-2)">🌙 晚间 10min · 复盘今天</div>
+              <div id="eveningChecklist"></div>
+              <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+                <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">写生活记录</button>
+              </div>
+            </div>
+            <div style="margin-top:var(--space-3)">
+              <button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:5px 8px" id="phaseToggleBtn" onclick="toggleWorkflowPhase()">🌙 切到晚间复盘</button>
+            </div>
           </div>
         </div>
-        <div id="workflowEvening" style="display:none">
-          <div style="font-size:12px;font-weight:var(--fw-semibold);color:var(--accent);margin-bottom:var(--space-2)">🌙 晚间 10min · 复盘今天</div>
-          <div id="eveningChecklist"></div>
-          <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
-            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;padding:6px 8px" onclick="switchPage('life',window.event)">写生活记录</button>
+
+        <!-- 本周全部推荐 -->
+        <div class="card" id="weeklyCard" style="display:none">
+          <div class="card-title">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>本周全部推荐
+            <span style="margin-left:auto;font-size:10px;padding:3px 8px;background:var(--primary-bg);border-radius:var(--radius-sm);color:var(--primary);font-weight:var(--fw-regular)" id="homeStageLabel" onclick="toggleHomeStage()">水电阶段</span>
+          </div>
+          <div id="weeklyRecommend"></div>
+          <button class="btn btn-outline btn-block" style="margin-top:var(--space-3)" onclick="refreshWeekly()">重新生成本周推荐</button>
+        </div>
+
+        <div style="text-align:center;margin-bottom:var(--space-4)">
+          <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">查看本周全部推荐</button>
+        </div>
+
+        <div class="card card-collapsible" id="top3Card">
+          <div class="card-title" onclick="toggleCollapse(this)">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>今日三件最重要的事
+            <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="card-body">
+            <div id="top3List"></div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
+              <input class="input" id="top3Input" placeholder="添加一件最重要的事..." style="flex:1">
+              <button class="btn btn-primary btn-sm" onclick="addTop3()">添加</button>
+            </div>
           </div>
         </div>
-        <div style="margin-top:var(--space-3)">
-          <button class="btn btn-outline btn-sm" style="width:100%;font-size:11px;padding:5px 8px" id="phaseToggleBtn" onclick="toggleWorkflowPhase()">🌙 切到晚间复盘</button>
+
+        <div class="card card-collapsible">
+          <div class="card-title" onclick="toggleCollapse(this)">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2v14h20zM8 21h8M12 17v4"/></svg></span>今日内容发布追踪
+            <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="card-body">
+            <table class="track-table" id="trackTable"></table>
+          </div>
         </div>
-        <div style="margin-top:var(--space-2);font-size:10px;color:var(--text-muted);text-align:center">周日 30min：三账号复盘 → 调整下周选题</div>
-      </div>
 
-      <!-- 本周全部推荐 -->
-      <div class="card" id="weeklyCard" style="display:none">
-        <div class="card-title">
-          <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>本周全部推荐
-          <span style="margin-left:auto;font-size:10px;padding:3px 8px;background:var(--primary-bg);border-radius:var(--radius-sm);color:var(--primary);font-weight:var(--fw-regular)" id="homeStageLabel" onclick="toggleHomeStage()">水电阶段</span>
+        <div class="card card-collapsible">
+          <div class="card-title" onclick="toggleCollapse(this)">
+            <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>其他待办
+            <span class="card-collapse-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="card-body">
+            <div id="todoList"></div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
+              <input class="input" id="todoInput" placeholder="添加待办事项..." style="flex:1">
+              <button class="btn btn-primary btn-sm" onclick="addTodo()">添加</button>
+            </div>
+          </div>
         </div>
-        <div id="weeklyRecommend"></div>
-        <button class="btn btn-outline btn-block" style="margin-top:var(--space-3)" onclick="refreshWeekly()">重新生成本周推荐</button>
+      </div><!-- /planMoreSection -->
+
+      <!-- 展开更多按钮 -->
+      <div style="text-align:center;margin-top:var(--space-3)">
+        <button class="btn btn-outline btn-sm" id="toggleMoreBtn" onclick="togglePlanMore()">▼ 展开更多</button>
       </div>
 
-      <div style="text-align:center;margin-bottom:var(--space-4)">
-        <button class="btn btn-outline btn-sm" id="toggleWeeklyBtn" onclick="toggleWeeklyView()">查看本周全部推荐</button>
-      </div>
-
-      <div class="card" id="top3Card">
-        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>今日三件最重要的事</div>
-        <div id="top3List"></div>
-        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
-          <input class="input" id="top3Input" placeholder="添加一件最重要的事..." style="flex:1">
-          <button class="btn btn-primary btn-sm" onclick="addTop3()">添加</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2v14h20zM8 21h8M12 17v4"/></svg></span>今日内容发布追踪</div>
-        <table class="track-table" id="trackTable"></table>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>其他待办</div>
-        <div id="todoList"></div>
-        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3)">
-          <input class="input" id="todoInput" placeholder="添加待办事项..." style="flex:1">
-          <button class="btn btn-primary btn-sm" onclick="addTodo()">添加</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg></span>今日数据速记</div>
-        <div id="dataQuick"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></span>今日小记</div>
-        <textarea class="textarea" id="dailyNote" placeholder="一句话记录今天..." style="min-height:50px"></textarea>
-      </div>
     </div>
 
     <!-- ===== 页面1: 选题库 ===== -->
@@ -1533,20 +1564,11 @@ function renderPlan(){
   });
   document.getElementById('todoList').innerHTML = todoHtml;
 
-  // 数据速记
-  var dataAcc = [['luxe','鹿溪风'],['home','鹿住新家'],['slow','鹿慢慢']];
-  var dataHtml = '';
-  dataAcc.forEach(function(a){
-    var dyVal = plan.data[a[0]+'_dy'] || '';
-    var xhsVal = plan.data[a[0]+'_xhs'] || '';
-    dataHtml += '<div style="margin-bottom:var(--space-3)"><div style="font-size:13px;font-weight:var(--fw-medium);margin-bottom:var(--space-1)">'+a[1]+'</div>'+
-      '<div style="display:flex;gap:var(--space-2)"><input class="input" style="flex:1;font-size:12px" placeholder="抖音数据" value="'+esc(dyVal)+'" oninput="setData(\''+a[0]+'\',\'dy\',this.value)">'+
-      '<input class="input" style="flex:1;font-size:12px" placeholder="小红书数据" value="'+esc(xhsVal)+'" oninput="setData(\''+a[0]+'\',\'xhs\',this.value)"></div></div>';
-  });
-  document.getElementById('dataQuick').innerHTML = dataHtml;
-
-  // 小记
+  // note
   document.getElementById('dailyNote').value = plan.note || '';
+
+  // checkin stats
+  renderCheckinStats();
   updateTopbarProgress();
 }
 
@@ -1563,6 +1585,107 @@ function delTop3(i){ var p = getPlan(); p.top3.splice(i,1); savePlan(p); renderP
 function addTodo(){ var inp = document.getElementById('todoInput'); if(!inp.value.trim()) return; var p = getPlan(); p.todos.push({ text:inp.value.trim(), done:false }); savePlan(p); inp.value=''; renderPlan(); scheduleRealtimeSync(); }
 function toggleTodo(i){ var p = getPlan(); p.todos[i].done = !p.todos[i].done; savePlan(p); renderPlan(); scheduleRealtimeSync(); }
 function delTodo(i){ var p = getPlan(); p.todos.splice(i,1); savePlan(p); renderPlan(); scheduleRealtimeSync(); }
+
+/* ===== 打卡统计 ===== */
+function renderCheckinStats(){
+  var streak = 0;
+  var today = new Date();
+  for(var i = 0; i < 365; i++){
+    var d = new Date(today);
+    d.setDate(d.getDate() - i);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var plan = DB.get('plan_'+key, {note:''});
+    var life = DB.get('life_'+key, {event:''});
+    if((plan.note && plan.note.trim()) || (life.event && life.event.trim())){ streak++; } else { break; }
+  }
+  // 本周打卡
+  var weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  var weekCount = 0;
+  for(var i = 0; i < 7; i++){
+    var d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    if(d > today) break;
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var plan = DB.get('plan_'+key, {note:''});
+    var life = DB.get('life_'+key, {event:''});
+    if((plan.note && plan.note.trim()) || (life.event && life.event.trim())) weekCount++;
+  }
+  // 本月打卡
+  var monthCount = 0;
+  var dim = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  for(var i = 1; i <= dim; i++){
+    var key = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(i).padStart(2,'0');
+    var plan = DB.get('plan_'+key, {note:''});
+    var life = DB.get('life_'+key, {event:''});
+    if((plan.note && plan.note.trim()) || (life.event && life.event.trim())) monthCount++;
+  }
+  var sEl = document.getElementById('streakCount');
+  var wEl = document.getElementById('weekCount');
+  var mEl = document.getElementById('monthCount');
+  if(sEl) sEl.textContent = streak;
+  if(wEl) wEl.textContent = weekCount;
+  if(mEl) mEl.textContent = monthCount;
+}
+
+function saveCheckin(){
+  var inp = document.getElementById('dailyNote');
+  if(!inp.value.trim()){ toast('写一句再打卡呀'); return; }
+  var p = getPlan();
+  p.note = inp.value;
+  savePlan(p);
+  renderCheckinStats();
+  toast('✓ 打卡成功！');
+  scheduleRealtimeSync();
+}
+
+function togglePlanMore(){
+  var section = document.getElementById('planMoreSection');
+  var btn = document.getElementById('toggleMoreBtn');
+  if(section.style.display === 'none' || !section.style.display){
+    section.style.display = 'block';
+    btn.textContent = '▲ 收起';
+  } else {
+    section.style.display = 'none';
+    btn.textContent = '▼ 展开更多';
+  }
+}
+
+/* 打卡页语音转文字 */
+var checkinVoiceTarget = 'dailyNote';
+function toggleCheckinVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    toast('浏览器不支持语音输入'); return;
+  }
+  var btn = document.getElementById('checkinVoiceBtn');
+  if(checkinVoiceListening){ checkinVoiceRecognition.stop(); return; }
+  startCheckinVoice();
+  btn.textContent = '⏹';
+}
+var checkinVoiceRecognition = null;
+var checkinVoiceListening = false;
+function startCheckinVoice(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  checkinVoiceRecognition = new SR();
+  checkinVoiceRecognition.lang = 'zh-CN';
+  checkinVoiceRecognition.continuous = true;
+  checkinVoiceRecognition.interimResults = false;
+  checkinVoiceRecognition.onresult = function(e){
+    var txt = '';
+    for(var i = e.resultIndex; i < e.results.length; i++){ txt += e.results[i][0].transcript; }
+    var inp = document.getElementById('dailyNote');
+    inp.value += txt;
+    var p = getPlan(); p.note = inp.value; savePlan(p); scheduleRealtimeSync();
+  };
+  checkinVoiceRecognition.onend = function(){
+    checkinVoiceListening = false;
+    var btn = document.getElementById('checkinVoiceBtn');
+    if(btn) btn.textContent = '🎤';
+  };
+  checkinVoiceRecognition.start();
+  checkinVoiceListening = true;
+  toast('开始说话...');
+}
 
 function setTrack(acc, plat, val){ var p = getPlan(); p.track[acc+'_'+plat] = val; savePlan(p); scheduleRealtimeSync(); }
 function setData(acc, plat, val){ var p = getPlan(); p.data[acc+'_'+plat] = val; savePlan(p); scheduleRealtimeSync(); }
@@ -3702,7 +3825,7 @@ function checkSyncStatus(){
 document.getElementById('topDate').textContent = formatDate();
 // 0. 版本检测 - 如果本地版本和服务器不一致，强制刷新
 (function checkVersion(){
-  var CURRENT_VERSION = '4.9';
+  var CURRENT_VERSION = '5.0';
   var saved = DB.get('app_version', '');
   if(saved && saved !== CURRENT_VERSION){
     DB.set('app_version', CURRENT_VERSION);
